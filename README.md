@@ -1,67 +1,86 @@
 # simple-passwordless-auth
 
-Simple typescript app with jest to create a npm library with types
+A lightweight and simple library for passwordless authentication. Built to help you get things done quickly and securely
+
+![code-example](https://github.com/TheSmartMonkey/simple-passwordless-auth/blob/main/debug/code-example.png)
+
+## Features
+
+- [x] Google OAuth2
+- [x] Passwordless authentication with a Drizzle ORM integration (you can also use your own database / ORM)
+
+## Simple examples
+
+### Passwordless authentication
+
+```ts
+import { login, validateCode } from 'simple-passwordless-auth';
+
+// Login with email
+let authCode;
+await login(
+      email,
+      (user) => {
+        console.log('getUserByEmailAndUpdateUserIfExist');
+        authCode = user.authCode;
+        console.log({ authCode });
+        return Promise.resolve({} as UserDao);
+      },
+      () => {
+        console.log('createUser');
+        return Promise.resolve();
+      },
+      () => {
+        console.log('sendEmailWithVerificationCode');
+        return Promise.resolve();
+      },
+    )
+
+// Validate the auth code
+const isValid = await validateCode(
+      process.env.JWT_SECRET ?? '',
+      email,
+      authCode,
+      () => {
+        console.log('getUserByEmail');
+        return Promise.resolve({} as UserDao);
+      },
+    );
+```
+
+### Google OAuth2
+
+```ts
+import { initGoogleOAuth2Client } from 'simple-passwordless-auth';
+
+const googleClient = initGoogleOAuth2Client(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, process.env.GOOGLE_REDIRECT_URL);
+
+// Redirect user to googleAuthUrl
+const googleAuthUrl = getGoogleAuthUrl(googleClient);
+
+// Handle the callback in a separate route
+const userInfo = await handleGoogleCallback(googleClient, code);
+```
+
+## Rich example
+
+See [debug/main.ts](debug/main.ts) for a complete example
 
 ## Installation
 
 ```sh
-npx degit https://github.com/TheSmartMonkey/simple-passwordless-auth app
+npm i simple-passwordless-auth
 ```
 
-## Getting started
+### Setup Google OAuth2
 
-1. Install nodejs : https://nodejs.org/en/
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project
+3. Enable the Google OAuth2 API
+4. Init a new OAuth consent screen
+5. Create credentials for OAuth2 client ID and secret (copy the client ID and secret to `initGoogleOAuth2Client()`)
+6. Set the redirect URL (example: `http://localhost:3000/auth/google/callback`)
 
-2. Install node_modules with `npm install`
+### Contributing
 
-3. Available commands with `npm run` (`npm start` runs your code from `main.ts`)
-
-## Running Tests
-
-To run the tests for your library, use the following command:
-
-```sh
-npm run test
-```
-
-This will execute all test files using Jest.
-
-## Publish your library
-
-To publish your library to npm, use the following command:
-
-```sh
-npm run pub
-```
-
-Ensure you have updated the version in `package.json` and are logged into npm.
-
-## Folder tree
-
-```
-|   .eslintrc.json
-|   .gitignore
-|   .prettierignore
-|   .prettierrc.json
-|   jest.config.ts
-|   LICENSE
-|   main.ts
-|   package-lock.json
-|   package.json
-|   README.md
-|   tsconfig.json
-|
-+---debug
-    +---main.ts
-    +---package-lock.json
-    +---package.json
-|
-+---src
-|   +---functions
-        hello.test.ts
-        hello.ts
-    +---libs
-        .gitkeep
-    +---models
-        hello.model.ts
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more information
