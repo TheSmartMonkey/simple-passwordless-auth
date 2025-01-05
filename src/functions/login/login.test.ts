@@ -1,5 +1,5 @@
 import * as helpers from '@/libs/helpers';
-import { UserDao } from '@/models/hello.model';
+import { UserDao } from '@/models/user.model';
 import { fake, fakeAuthCode, fakeUser } from '@/tests/fake';
 import { describe, expect, test } from '@jest/globals';
 import { login } from './login';
@@ -52,6 +52,6 @@ describe('login unit', () => {
     // Then
     await expect(
       login(invalidEmail, getUserByEmailAndUpdateUserIfExistCallback, createUserCallback, sendEmailWithVerificationCodeCallback),
-    ).rejects.toThrow('INVALID_EMAIL_FORMAT');
+    ).rejects.toThrow('simple-passwordless-auth:INVALID_EMAIL_FORMAT');
   });
 });

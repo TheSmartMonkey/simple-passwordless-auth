@@ -1,5 +1,5 @@
 {
-  "name": "create-typescript-npm-library",
+  "name": "simple-passwordless-auth",
   "description": "Simple typescript app with jest to create a npm library with types",
   "version": "0.0.1",
   "main": "dist/index.js",
@@ -16,10 +16,14 @@
     "test": "jest",
     "pub": "npm run build && npm version patch && npm publish"
   },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2"
+  },
   "devDependencies": {
     "@faker-js/faker": "^9.3.0",
     "@jest/globals": "^29.7.0",
     "@types/jest": "^29.5.14",
+    "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^22.10.0",
     "@typescript-eslint/eslint-plugin": "^8.16.0",
     "eslint": "^8.30.0",
@@ -35,13 +39,17 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/TheSmartMonkey/create-typescript-npm-library/issues"
+    "url": "https://github.com/TheSmartMonkey/simple-passwordless-auth/issues"
   },
-  "homepage": "https://github.com/TheSmartMonkey/create-typescript-npm-library#readme",
+  "homepage": "https://github.com/TheSmartMonkey/simple-passwordless-auth#readme",
   "keywords": [
     "npm",
-    "library",
-    "template",
+    "passwordless",
+    "auth",
     "typescript"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheSmartMonkey/simple-passwordless-auth.git"
+  }
 }

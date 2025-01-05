@@ -7,11 +7,6 @@ export type UserDao = {
   updatedAt: Date;
 };
 
-export type GetUserByEmailAndUpdateUserIfExist = Partial<UserDao> & {
+export type PartialUserWithRequiredEmail = Partial<UserDao> & {
   email: UserDao['email'];
-};
-
-export type ValidateCodeDto = {
-  email: string;
-  code: string;
 };

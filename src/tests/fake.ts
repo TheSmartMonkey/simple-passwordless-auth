@@ -1,15 +1,17 @@
 import { uuid } from '@/libs/helpers';
-import { UserDao } from '@/models/hello.model';
+import { UserDao } from '@/models/user.model';
 import { faker } from '@faker-js/faker';
 
 export const fake = faker;
 
 export function fakeUser(partialUser: Partial<UserDao>): UserDao {
+  const expiredDate = new Date();
+  expiredDate.setDate(expiredDate.getDate() + 1);
   return {
     _id: uuid(),
     email: fake.internet.email(),
     authCode: 123456,
-    authCodeExpirationDate: new Date(),
+    authCodeExpirationDate: expiredDate,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...partialUser,

@@ -1,11 +1,11 @@
-# create-typescript-npm-library
+# simple-passwordless-auth
 
 Simple typescript app with jest to create a npm library with types
 
 ## Installation
 
 ```sh
-npx degit https://github.com/TheSmartMonkey/create-typescript-npm-library app
+npx degit https://github.com/TheSmartMonkey/simple-passwordless-auth app
 ```
 
 ## Getting started

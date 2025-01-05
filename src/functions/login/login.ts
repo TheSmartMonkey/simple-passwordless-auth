@@ -1,5 +1,5 @@
-import { addHoursToCurrentDate, generateEmailVerificationSixDigitCode, getCurrentDate, isValidEmail, uuid } from '@/libs/helpers';
-import { GetUserByEmailAndUpdateUserIfExist, UserDao } from '@/models/hello.model';
+import { addHoursToCurrentDate, generateEmailVerificationSixDigitCode, getCurrentDate, uuid, validateEmail } from '@/libs/helpers';
+import { PartialUserWithRequiredEmail, UserDao } from '@/models/user.model';
 
 /**
  * @param email - The email of the user to login
@@ -9,36 +9,32 @@ import { GetUserByEmailAndUpdateUserIfExist, UserDao } from '@/models/hello.mode
  */
 export async function login(
   email: string,
-  getUserByEmailAndUpdateUserIfExistCallback: (user: GetUserByEmailAndUpdateUserIfExist) => Promise<UserDao>,
+  getUserByEmailAndUpdateUserIfExistCallback: (user: PartialUserWithRequiredEmail) => Promise<UserDao>,
   createUserCallback: (user: UserDao) => Promise<void>,
   sendEmailWithVerificationCodeCallback: (email: string, verificationCode: number) => Promise<void>,
 ): Promise<void> {
-  const decodedEmail = decodeURIComponent(email);
-  if (!isValidEmail(decodedEmail)) {
-    throw new Error('INVALID_EMAIL_FORMAT');
-  }
+  validateEmail(email);
   const authCode = generateEmailVerificationSixDigitCode();
-  const currentDate = getCurrentDate();
-  const date = addHoursToCurrentDate(currentDate);
+  const today = getCurrentDate();
   const user: UserDao = {
     _id: uuid(),
-    email: decodedEmail,
+    email,
     authCode,
-    authCodeExpirationDate: date,
-    createdAt: currentDate,
-    updatedAt: currentDate,
+    authCodeExpirationDate: addHoursToCurrentDate(today),
+    createdAt: today,
+    updatedAt: today,
   };
 
   await updateUserOrCreateNewUser(user, getUserByEmailAndUpdateUserIfExistCallback, createUserCallback);
-  await sendEmailWithVerificationCodeCallback(decodedEmail, authCode);
+  await sendEmailWithVerificationCodeCallback(email, authCode);
 }
 
 async function updateUserOrCreateNewUser(
   user: UserDao,
-  getUserByEmailAndUpdateUserIfExistCallback: (user: GetUserByEmailAndUpdateUserIfExist) => Promise<UserDao | undefined>,
+  getUserByEmailAndUpdateUserIfExistCallback: (partialUser: PartialUserWithRequiredEmail) => Promise<UserDao | undefined>,
   createUserCallback: (user: UserDao) => Promise<void>,
 ): Promise<void> {
-  const partialUser: GetUserByEmailAndUpdateUserIfExist = {
+  const partialUser: PartialUserWithRequiredEmail = {
     email: user.email,
     authCode: user.authCode,
     authCodeExpirationDate: user.authCodeExpirationDate,
