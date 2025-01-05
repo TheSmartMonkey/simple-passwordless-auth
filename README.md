@@ -4,6 +4,12 @@ A lightweight and simple library for passwordless authentication. Built to help 
 
 ![code-example](https://github.com/TheSmartMonkey/simple-passwordless-auth/blob/main/debug/code-example.png)
 
+## Installation
+
+```sh
+npm i simple-passwordless-auth
+```
+
 ## Features
 
 - [x] Google OAuth2
@@ -62,17 +68,7 @@ const googleAuthUrl = getGoogleAuthUrl(googleClient);
 const userInfo = await handleGoogleCallback(googleClient, code);
 ```
 
-## Rich example
-
-See [debug/main.ts](debug/main.ts) for a complete example
-
-## Installation
-
-```sh
-npm i simple-passwordless-auth
-```
-
-### Setup Google OAuth2
+#### Setup Google OAuth2
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project
@@ -80,6 +76,10 @@ npm i simple-passwordless-auth
 4. Init a new OAuth consent screen
 5. Create credentials for OAuth2 client ID and secret (copy the client ID and secret to `initGoogleOAuth2Client()`)
 6. Set the redirect URL (example: `http://localhost:3000/auth/google/callback`)
+
+## Rich example
+
+See [debug/main.ts](debug/main.ts) for a complete example
 
 ### Contributing
 
