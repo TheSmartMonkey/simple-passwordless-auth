@@ -3,23 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Google OAuth Login</title>
+    <title>Passwordless Auth</title>
     <style>
       body {
         font-family: Arial, sans-serif;
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
         height: 100vh;
         margin: 0;
       }
+      input,
+      button {
+        margin: 5px;
+        padding: 10px;
+        font-size: 16px;
+      }
       button {
         background-color: #4285f4;
         color: white;
         border: none;
-        padding: 10px 20px;
         border-radius: 5px;
-        font-size: 16px;
         cursor: pointer;
       }
       button:hover {
@@ -28,9 +33,78 @@
     </style>
   </head>
   <body>
-    <button id="googleSignIn">Sign in with Google</button>
+    <div>
+      <h2>Passwordless Login</h2>
+      <input type="email" id="email" placeholder="Enter your email" required />
+      <button id="loginButton">Login</button>
+    </div>
+
+    <div>
+      <h2>Validate Code</h2>
+      <input type="text" id="code" placeholder="Enter your code" required />
+      <button id="validateButton">Validate Code</button>
+    </div>
+
+    <div>
+      <h2>Google Sign In</h2>
+      <button id="googleSignIn">Sign in with Google</button>
+    </div>
 
     <script>
+      document.getElementById('loginButton').addEventListener('click', async () => {
+        const email = document.getElementById('email').value;
+        if (!email) {
+          alert('Please enter your email.');
+          return;
+        }
+
+        try {
+          const response = await fetch('http://localhost:3000/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email }),
+          });
+
+          if (response.ok) {
+            alert('Login initiated, check your email for the verification code.');
+          } else {
+            const errorText = await response.text();
+            alert(`Error: ${errorText}`);
+          }
+        } catch (error) {
+          alert(`Error: ${error.message}`);
+        }
+      });
+
+      document.getElementById('validateButton').addEventListener('click', async () => {
+        const email = document.getElementById('email').value;
+        const code = document.getElementById('code').value;
+        if (!email || !code) {
+          alert('Please enter both your email and code.');
+          return;
+        }
+
+        try {
+          const response = await fetch('http://localhost:3000/auth/validate-code', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, code }),
+          });
+
+          if (response.ok) {
+            alert('Code validated successfully.');
+          } else {
+            const errorText = await response.text();
+            alert(`Error: ${errorText}`);
+          }
+        } catch (error) {
+          alert(`Error: ${error.message}`);
+        }
+      });
       document.getElementById('googleSignIn').addEventListener('click', () => {
         // Redirect to the backend's Google Auth URL
         window.location.href = 'http://localhost:3000/auth/google';
