@@ -2,7 +2,7 @@
 
 A lightweight and simple library for passwordless authentication. Built to help you get things done quickly and securely
 
-![code-example](https://github.com/TheSmartMonkey/simple-passwordless-auth/blob/main/debug/code-example.png)
+![code-example](https://github.com/TheSmartMonkey/simple-passwordless-auth/blob/main/.github/images/code-example.png)
 
 ## Installation
 
