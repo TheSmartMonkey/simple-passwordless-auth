@@ -17,6 +17,7 @@
     "pub": "npm run build && npm version patch && npm publish"
   },
   "dependencies": {
+    "google-auth-library": "^9.15.0",
     "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {

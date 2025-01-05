@@ -22,6 +22,7 @@ export async function validateCode(
   }
   validateEmail(email);
   const user = await getUserByEmail(email);
+  // TODO: remove {}
   if (!user) {
     throwError('USER_IS_NOT_REGISTERED');
   }

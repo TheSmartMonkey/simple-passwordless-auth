@@ -2,7 +2,7 @@
   "env": {
     "browser": false
   },
-  "ignorePatterns": ["node_modules", "openapi/dist", "dist"],
+  "ignorePatterns": ["node_modules", "openapi/dist", "dist", "debug"],
   "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended", "plugin:jest/recommended"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
