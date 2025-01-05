@@ -1,5 +1,5 @@
 // Functions
-export * from '@/functions/hello';
+export * from '@/functions/login/login';
 
 // Models
 export * from '@/models/hello.model';
