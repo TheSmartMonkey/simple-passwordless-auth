@@ -1,10 +1,12 @@
 import { uuid } from '@/libs/helpers';
-import { UserDao } from '@/models/user.model';
+import { PartialUserWithRequiredEmail, UserDao } from '@/models/user.model';
 import { faker } from '@faker-js/faker';
+import { createUser, getUserByEmailAndUpdateUserIfExist } from './db/queries';
+import { InsertDbUser, selectDbUserToUserDao, userDaoToInsertUser } from './db/schemas';
 
 export const fake = faker;
 
-export function fakeUser(partialUser: Partial<UserDao>): UserDao {
+export function fakeUser(partialUser: Partial<UserDao> = {}): UserDao {
   const expiredDate = new Date();
   expiredDate.setDate(expiredDate.getDate() + 1);
   return {
@@ -18,6 +20,38 @@ export function fakeUser(partialUser: Partial<UserDao>): UserDao {
   };
 }
 
+export function fakeDbUser(partialUser: Partial<InsertDbUser> = {}): InsertDbUser {
+  const expiredDate = new Date();
+  expiredDate.setDate(expiredDate.getDate() + 1);
+  return {
+    _id: uuid(),
+    email: fake.internet.email(),
+    authCode: 123456,
+    authCodeExpirationDate: expiredDate.toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...partialUser,
+  };
+}
+
+export async function createFakeUser(): Promise<void> {
+  const user = fakeDbUser();
+  await createUser(user);
+}
+
 export function fakeAuthCode(): number {
   return fake.number.int({ min: 100000, max: 999999 });
+}
+
+export async function fakeGetUserByEmailAndUpdateUserIfExistCallback(user: PartialUserWithRequiredEmail): Promise<UserDao | undefined> {
+  console.log('fakeGetUserByEmailAndUpdateUserIfExistCallback');
+  const userDb = await getUserByEmailAndUpdateUserIfExist(user);
+  if (!userDb) return undefined;
+  return selectDbUserToUserDao(userDb);
+}
+
+export async function fakeCreateUserCallback<TUser extends UserDao>(user: TUser): Promise<void> {
+  console.log('fakeCreateUserCallback');
+  const insertUser = userDaoToInsertUser(user);
+  await createUser(insertUser);
 }

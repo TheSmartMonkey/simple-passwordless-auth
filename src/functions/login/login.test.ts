@@ -1,3 +1,6 @@
+/**
+ * @group unit
+ */
 import * as helpers from '@/libs/helpers';
 import { UserDao } from '@/models/user.model';
 import { fake, fakeAuthCode, fakeUser } from '@/tests/fake';

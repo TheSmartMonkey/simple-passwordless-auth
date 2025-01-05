@@ -10,11 +10,11 @@ import { UserDao } from '@/models/user.model';
  * @param tokenExpiresIn - Expressed in seconds or a string describing a time span [zeit/ms](https://github.com/zeit/ms.js).  Eg: 60, "2 days", "10h", "7d"
  * @returns The JWT token
  */
-export async function validateCode(
+export async function validateCode<TUser extends UserDao>(
   jwtTokenSecret: string,
   email: string,
   sixDigitCode: number,
-  getUserByEmail: (email: string) => Promise<UserDao>,
+  getUserByEmail: (email: string) => Promise<TUser>,
   { tokenExpiresIn = '30d' }: { tokenExpiresIn?: string } = {},
 ): Promise<string> {
   if (!jwtTokenSecret) {

@@ -2,3 +2,5 @@ node_modules
 dist
 junit.xml
 .env
+drizzle
+test.db
