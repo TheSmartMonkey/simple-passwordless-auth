@@ -43,7 +43,7 @@ export function fakeAuthCode(): number {
   return fake.number.int({ min: 100000, max: 999999 });
 }
 
-export async function fakeGetUserByEmailAndUpdateUserIfExistCallback(user: PartialUserWithRequiredEmail): Promise<UserDao | undefined> {
+export async function fakeGetUserByEmailAndUpdateUserIfExistCallback(user: PartialUserWithRequiredEmail<UserDao>): Promise<UserDao | undefined> {
   console.log('fakeGetUserByEmailAndUpdateUserIfExistCallback');
   const userDb = await getUserByEmailAndUpdateUserIfExist(user);
   if (!userDb) return undefined;

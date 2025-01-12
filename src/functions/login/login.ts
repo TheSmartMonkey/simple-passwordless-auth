@@ -1,5 +1,5 @@
 import { addHoursToCurrentDate, generateEmailVerificationSixDigitCode, getCurrentDate, uuid, validateEmail } from '@/libs/helpers';
-import { PartialUserWithRequiredEmail, UserDao } from '@/models/user.model';
+import { OnlyAdditionnalFieldsUser, PartialUserWithRequiredEmail, UserDao } from '@/models/user.model';
 
 /**
  * @param email - The email of the user to login
@@ -10,10 +10,10 @@ import { PartialUserWithRequiredEmail, UserDao } from '@/models/user.model';
  */
 export async function login<TUser extends UserDao>(
   email: string,
-  getUserByEmailAndUpdateUserIfExistCallback: (user: PartialUserWithRequiredEmail) => Promise<TUser | undefined>,
+  getUserByEmailAndUpdateUserIfExistCallback: (user: PartialUserWithRequiredEmail<TUser>) => Promise<TUser | undefined>,
   createUserCallback: (user: TUser) => Promise<void>,
   sendEmailWithVerificationCodeCallback: (email: string, verificationCode: number) => Promise<void>,
-  { userAdditionnalFields = {} }: { userAdditionnalFields?: Partial<TUser> } = {},
+  { userAdditionnalFields = {} as OnlyAdditionnalFieldsUser<TUser> }: { userAdditionnalFields?: OnlyAdditionnalFieldsUser<TUser> } = {},
 ): Promise<void> {
   validateEmail(email);
   const authCode = generateEmailVerificationSixDigitCode();
@@ -34,15 +34,10 @@ export async function login<TUser extends UserDao>(
 
 async function updateUserOrCreateNewUser<TUser extends UserDao>(
   user: TUser,
-  getUserByEmailAndUpdateUserIfExistCallback: (partialUser: PartialUserWithRequiredEmail) => Promise<TUser | undefined>,
+  getUserByEmailAndUpdateUserIfExistCallback: (partialUser: PartialUserWithRequiredEmail<TUser>) => Promise<TUser | undefined>,
   createUserCallback: (user: TUser) => Promise<void>,
 ): Promise<void> {
-  const partialUser: PartialUserWithRequiredEmail = {
-    email: user.email,
-    authCode: user.authCode,
-    authCodeExpirationDate: user.authCodeExpirationDate,
-  };
-  const foundUser = await getUserByEmailAndUpdateUserIfExistCallback(partialUser);
+  const foundUser = await getUserByEmailAndUpdateUserIfExistCallback(user);
   if (!foundUser) {
     await createUserCallback(user);
   }
