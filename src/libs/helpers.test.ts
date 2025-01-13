@@ -1,3 +1,6 @@
+/**
+ * @group unit
+ */
 import { fake } from '@/tests/fake';
 import { describe, expect, test } from '@jest/globals';
 import { validateEmail } from './helpers';

@@ -10,6 +10,7 @@ export default {
   },
   reporters: ['default'],
   roots: ['<rootDir>'],
+  runner: 'groups',
   testEnvironment: 'node',
   transform: {
     '^.+\\.tsx?$': [
@@ -19,4 +20,8 @@ export default {
       },
     ],
   },
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/dist/', // Ignore tests in the dist folder
+  ],
 };

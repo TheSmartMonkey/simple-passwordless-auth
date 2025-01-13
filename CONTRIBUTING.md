@@ -4,7 +4,7 @@
 
 1. Install node_modules with `npm install`
 
-3. Available commands with `npm run` (`npm start` runs your code from `debug/main.ts`)
+2. Available commands with `npm run` (`npm start` runs your code from `debug/main.ts`)
 
 ## Running Tests
 

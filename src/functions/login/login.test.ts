@@ -1,3 +1,6 @@
+/**
+ * @group unit
+ */
 import * as helpers from '@/libs/helpers';
 import { UserDao } from '@/models/user.model';
 import { fake, fakeAuthCode, fakeUser } from '@/tests/fake';
@@ -53,5 +56,23 @@ describe('login unit', () => {
     await expect(
       login(invalidEmail, getUserByEmailAndUpdateUserIfExistCallback, createUserCallback, sendEmailWithVerificationCodeCallback),
     ).rejects.toThrow('simple-passwordless-auth:INVALID_EMAIL_FORMAT');
+  });
+
+  test('should create user with additionnal fields', async () => {
+    // Given
+    const userAdditionnalFields = {
+      name: 'John',
+    };
+    // When
+    await login(user.email, getUserByEmailAndUpdateUserIfExistCallback, createUserCallback, sendEmailWithVerificationCodeCallback, {
+      userAdditionnalFields,
+    });
+
+    // Then
+    expect(getUserByEmailAndUpdateUserIfExistCallback).toHaveBeenCalledWith(
+      expect.objectContaining({ email, authCode, name: userAdditionnalFields.name }),
+    );
+    expect(createUserCallback).not.toHaveBeenCalled();
+    expect(sendEmailWithVerificationCodeCallback).toHaveBeenCalledWith(user.email, user.authCode);
   });
 });

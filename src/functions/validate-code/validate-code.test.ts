@@ -1,3 +1,6 @@
+/**
+ * @group unit
+ */
 import * as helpers from '@/libs/helpers';
 import { UserDao } from '@/models/user.model';
 import { fake, fakeAuthCode, fakeUser } from '@/tests/fake';
@@ -59,7 +62,9 @@ describe('validateCode unit', () => {
     user.authCodeExpirationDate = expiredDate;
 
     // When
-    await expect(validateCode(jwtTokenSecret, email, authCode, getUserByEmail)).rejects.toThrow('simple-passwordless-auth:AUTH_CODE_EXPIRED');
+    await expect(validateCode(jwtTokenSecret, email, authCode, getUserByEmail)).rejects.toThrow(
+      'simple-passwordless-auth:AUTH_CODE_EXPIRED',
+    );
     expect(getUserByEmail).toHaveBeenCalledWith(email);
   });
 
