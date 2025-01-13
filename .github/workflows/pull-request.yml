@@ -1,0 +1,67 @@
+name: pull_request
+run-name: pull_request ${{ github.actor }} 🧪
+
+on: [pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Copy repository
+        uses: actions/checkout@v3
+
+      - name: Use Node.js 20.13.1
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.13.1'
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Build code
+        run: npm run build
+
+      - name: Check code quality
+        run: npm run lint:check
+
+      - name: Check code formating
+        run: npm run format:check
+
+  unit-tests:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Copy repository
+        uses: actions/checkout@v3
+
+      - name: Use Node.js 20.13.1
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.13.1'
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm run unit
+
+  integration-tests:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Copy repository
+        uses: actions/checkout@v3
+
+      - name: Use Node.js 20.13.1
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.13.1'
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Init database
+        run: npm run db:gen && npm run db:push
+
+      - name: Run tests
+        run: npm run integration
