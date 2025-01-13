@@ -66,7 +66,7 @@ app.post('/auth/login', async (req, res) => {
         console.log('sendEmailWithVerificationCode');
         return Promise.resolve();
       },
-    )
+    );
 
     res.status(200).send('Login initiated, check your email for the verification code.');
   } catch (error) {

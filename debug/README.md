@@ -3,6 +3,7 @@
 ## Getting Started
 
 Install dependencies:
+
 ```
 npm i
 ```
@@ -17,6 +18,7 @@ JWT_SECRET=
 ```
 
 Run the server:
+
 ```
 npm run start
 ```
