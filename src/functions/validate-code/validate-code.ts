@@ -14,30 +14,26 @@ export async function validateCode<TUser extends UserDao>(
   jwtTokenSecret: string,
   email: string,
   sixDigitCode: number,
-  getUserByEmail: (email: string) => Promise<TUser>,
+  getUserByEmail: (email: string) => Promise<TUser | undefined>,
   { tokenExpiresIn = '30d' }: { tokenExpiresIn?: string } = {},
 ): Promise<string> {
-  if (!jwtTokenSecret) {
-    throwError('MISSING_JWT_TOKEN_SECRET');
-  }
+  if (!jwtTokenSecret) throwError('MISSING_JWT_TOKEN_SECRET');
   validateEmail(email);
+
   const user = await getUserByEmail(email);
-  // TODO: remove {}
-  if (!user) {
-    throwError('USER_IS_NOT_REGISTERED');
-  }
+  if (!user) throwError('USER_IS_NOT_REGISTERED');
 
   const today = getCurrentDate();
-  if (user?.authCodeExpirationDate && today > user.authCodeExpirationDate) {
-    throwError('AUTH_CODE_EXPIRED');
-  }
-  if (sixDigitCode !== user?.authCode) {
-    throwError('WRONG_AUTH_CODE');
-  }
+  if (user?.authCodeExpirationDate && today > user.authCodeExpirationDate) throwError('AUTH_CODE_EXPIRED');
+  if (sixDigitCode !== user?.authCode) throwError('WRONG_AUTH_CODE');
+
   // TODO: block on certain number of tries (inc tries, calculate tries / date, connected update tries to 0 if > 1)
   // TODO: express-rate-limit by ip https://www.npmjs.com/package/express-rate-limit
 
-  // Get token
+  return getTokenFromJwtTokenSecret(user, jwtTokenSecret, { tokenExpiresIn });
+}
+
+function getTokenFromJwtTokenSecret(user: UserDao, jwtTokenSecret: string, { tokenExpiresIn }: { tokenExpiresIn?: string } = {}): string {
   const partialUser: Partial<UserDao> = {
     _id: user._id,
     email: user.email,

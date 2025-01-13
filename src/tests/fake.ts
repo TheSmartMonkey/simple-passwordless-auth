@@ -1,7 +1,7 @@
 import { uuid } from '@/libs/helpers';
 import { PartialUserWithRequiredEmail, UserDao } from '@/models/user.model';
 import { faker } from '@faker-js/faker';
-import { createUser, getUserByEmailAndUpdateUserIfExist } from './db/queries';
+import { createUser, getUserByEmail, getUserByEmailAndUpdateUserIfExist } from './db/queries';
 import { InsertDbUser, selectDbUserToUserDao, userDaoToInsertUser } from './db/schemas';
 
 export const fake = faker;
@@ -54,4 +54,10 @@ export async function fakeCreateUserCallback<TUser extends UserDao>(user: TUser)
   console.log('fakeCreateUserCallback');
   const insertUser = userDaoToInsertUser(user);
   await createUser(insertUser);
+}
+
+export async function fakeGetUserByEmailCallback(email: string): Promise<UserDao | undefined> {
+  const userDb = await getUserByEmail(email);
+  if (!userDb) return undefined;
+  return selectDbUserToUserDao(userDb);
 }

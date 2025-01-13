@@ -1,4 +1,4 @@
-import { PartialUserWithRequiredEmail } from '@/models/user.model';
+import { PartialUserWithRequiredEmail, UserDao } from '@/models/user.model';
 import { eq } from 'drizzle-orm';
 import { connectDb } from './connect';
 import { InsertDbUser, SelectDbUser, usersTable } from './schemas';
@@ -18,7 +18,13 @@ export async function deleteAllUsers(): Promise<void> {
   await db.delete(usersTable);
 }
 
-export async function getUserByEmailAndUpdateUserIfExist(user: PartialUserWithRequiredEmail): Promise<SelectDbUser> {
+export async function getUserByEmail(email: string): Promise<SelectDbUser | undefined> {
+  const db = await connectDb();
+  const userDb = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1).execute();
+  return userDb[0] ?? undefined;
+}
+
+export async function getUserByEmailAndUpdateUserIfExist(user: PartialUserWithRequiredEmail<UserDao>): Promise<SelectDbUser> {
   const db = await connectDb();
   const userDb = await db.select().from(usersTable).where(eq(usersTable.email, user.email)).limit(1).execute();
   return userDb[0];
