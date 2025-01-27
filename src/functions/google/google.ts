@@ -1,35 +1,45 @@
 import { throwError } from '@/libs/helpers';
-import { OAuth2Client } from 'google-auth-library';
+import { GoogleOAuth2Config } from '@/models/google.model';
+import { OAuth2Client, TokenPayload } from 'google-auth-library';
 
-export function initGoogleOAuth2Client(googleClientId: string, googleClientSecret: string, googleRedirectUrl: string): OAuth2Client {
-  return new OAuth2Client(googleClientId, googleClientSecret, googleRedirectUrl);
+export function initGoogleOAuth2Client(config: GoogleOAuth2Config): OAuth2Client {
+  return new OAuth2Client(config.clientId, config.clientSecret, config.redirectUrl);
 }
 
-export function getGoogleAuthUrl(googleClient: OAuth2Client): string {
+export function getGoogleAuthUrl(config: GoogleOAuth2Config): string {
+  const googleClient = initGoogleOAuth2Client(config);
   return googleClient.generateAuthUrl({
-    scope: ['email'],
+    scope: ['email', 'profile'],
   });
 }
 
-export async function handleGoogleCallback(googleClient: OAuth2Client, code: string): Promise<{ email: string }> {
+export async function handleGoogleCallback(config: GoogleOAuth2Config, code: string): Promise<TokenPayload> {
   try {
-    // Exchange authorization code for tokens
-    const { tokens } = await googleClient.getToken(code);
-    if (!tokens.id_token) {
-      throwError('FAILED_TO_GET_GOOGLE_ID_TOKEN');
-    }
-
-    // Verify the ID token
-    const ticket = await googleClient.verifyIdToken({
-      idToken: tokens.id_token,
-      audience: googleClient?._clientId,
-    });
-    const payload = ticket.getPayload();
-    if (!payload) throwError('FAILED_TO_GET_GOOGLE_ID_TOKEN_PAYLOAD');
-    if (!payload.email) throwError('FAILED_TO_GET_GOOGLE_ID_TOKEN_PAYLOAD_EMAIL');
-
-    return { email: payload.email };
+    const googleClient = initGoogleOAuth2Client(config);
+    const idToken = await getGoogleToken(googleClient, code);
+    const payload = await verifyGoogleToken(googleClient, idToken);
+    return payload;
   } catch (error) {
     throwError((error as Error).message);
   }
+}
+
+async function getGoogleToken(googleClient: OAuth2Client, googleAuthCode: string): Promise<string> {
+  const { tokens } = await googleClient.getToken(googleAuthCode);
+  const idToken = tokens?.id_token;
+  if (!idToken) {
+    throwError('FAILED_TO_GET_GOOGLE_ID_TOKEN');
+  }
+  return idToken;
+}
+
+async function verifyGoogleToken(googleClient: OAuth2Client, googleIdToken: string): Promise<TokenPayload> {
+  const ticket = await googleClient.verifyIdToken({
+    idToken: googleIdToken,
+    audience: googleClient?._clientId,
+  });
+  const payload = ticket.getPayload();
+  if (!payload) throwError('FAILED_TO_GET_GOOGLE_ID_TOKEN_PAYLOAD');
+  if (!payload.email) throwError('FAILED_TO_GET_GOOGLE_ID_TOKEN_PAYLOAD_EMAIL');
+  return payload;
 }
