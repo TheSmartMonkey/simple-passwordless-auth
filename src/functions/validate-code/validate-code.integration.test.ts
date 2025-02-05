@@ -1,11 +1,10 @@
 /**
  * @group integration
  */
-import * as helpers from '@/libs/helpers';
+import * as helpers from '@/common/helpers';
 import { connectDb, disconnectDb } from '@/tests/db/connect';
 import { createUser, deleteAllUsers } from '@/tests/db/queries';
 import { fake, fakeAuthCode, fakeGetUserByEmailCallback } from '@/tests/fake';
-import { describe, expect, test } from '@jest/globals';
 import { validateCode } from './validate-code';
 
 describe('validateCode integration', () => {

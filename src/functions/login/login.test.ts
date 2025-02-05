@@ -1,48 +1,64 @@
 /**
  * @group unit
  */
-import * as helpers from '@/libs/helpers';
-import { UserDao } from '@/models/user.model';
-import { fake, fakeAuthCode, fakeUser } from '@/tests/fake';
-import { describe, expect, test } from '@jest/globals';
+import * as userModel from '@/models/user.model';
+import { OnlyAdditionalFieldsUser, UserDao } from '@/models/user.model';
+import { fakeUser } from '@/tests/fake';
 import { login } from './login';
 
 describe('login unit', () => {
   let user: UserDao;
-  const authCode = fakeAuthCode();
-  const email = fake.internet.email();
-  let getUserByEmailAndUpdateUserIfExistCallback: jest.Mock;
   let createUserCallback: jest.Mock;
   let sendEmailWithVerificationCodeCallback: jest.Mock;
+  let doesUserByEmailExistCallback: jest.Mock;
+  let updateUserWithUpdateUserObjectCallback: jest.Mock;
 
   beforeEach(() => {
-    jest.spyOn(helpers, 'generateEmailVerificationSixDigitCode').mockReturnValue(authCode);
-    user = fakeUser({ email, authCode });
-    getUserByEmailAndUpdateUserIfExistCallback = jest.fn(() => Promise.resolve(user));
+    user = fakeUser();
+    jest.spyOn(userModel, 'generateEmailVerificationSixDigitCode').mockReturnValue(user.authCode);
+    jest.spyOn(userModel, 'generateAuthCodeExpirationDate').mockReturnValue(user.authCodeExpirationDate);
     createUserCallback = jest.fn();
     sendEmailWithVerificationCodeCallback = jest.fn();
+    doesUserByEmailExistCallback = jest.fn(() => Promise.resolve(true));
+    updateUserWithUpdateUserObjectCallback = jest.fn(() => Promise.resolve());
   });
 
   test('should login and send email with verification code when user first login', async () => {
     // Given
-    getUserByEmailAndUpdateUserIfExistCallback = jest.fn(() => Promise.resolve(undefined));
+    doesUserByEmailExistCallback = jest.fn(() => Promise.resolve(false));
 
     // When
-    await login(email, getUserByEmailAndUpdateUserIfExistCallback, createUserCallback, sendEmailWithVerificationCodeCallback);
+    await login(
+      user.email,
+      doesUserByEmailExistCallback,
+      updateUserWithUpdateUserObjectCallback,
+      createUserCallback,
+      sendEmailWithVerificationCodeCallback,
+    );
 
     // Then
-    expect(getUserByEmailAndUpdateUserIfExistCallback).toHaveBeenCalledWith(expect.objectContaining({ email, authCode }));
-    expect(createUserCallback).toHaveBeenCalledWith(expect.objectContaining({ email, authCode }));
+    expect(doesUserByEmailExistCallback).toHaveBeenCalledWith(user.email);
+    expect(updateUserWithUpdateUserObjectCallback).not.toHaveBeenCalled();
+    expect(createUserCallback).toHaveBeenCalledWith(expect.objectContaining({ email: user.email, authCode: user.authCode }));
     expect(sendEmailWithVerificationCodeCallback).toHaveBeenCalledWith(user.email, user.authCode);
   });
 
   test('should login and send email with verification code when user already exists', async () => {
     // Given
     // When
-    await login(email, getUserByEmailAndUpdateUserIfExistCallback, createUserCallback, sendEmailWithVerificationCodeCallback);
+    await login(
+      user.email,
+      doesUserByEmailExistCallback,
+      updateUserWithUpdateUserObjectCallback,
+      createUserCallback,
+      sendEmailWithVerificationCodeCallback,
+    );
 
     // Then
-    expect(getUserByEmailAndUpdateUserIfExistCallback).toHaveBeenCalledWith(expect.objectContaining({ email, authCode }));
+    expect(doesUserByEmailExistCallback).toHaveBeenCalledWith(user.email);
+    expect(updateUserWithUpdateUserObjectCallback).toHaveBeenCalledWith(
+      expect.objectContaining({ email: user.email, authCode: user.authCode, authCodeExpirationDate: user.authCodeExpirationDate }),
+    );
     expect(createUserCallback).not.toHaveBeenCalled();
     expect(sendEmailWithVerificationCodeCallback).toHaveBeenCalledWith(user.email, user.authCode);
   });
@@ -54,7 +70,13 @@ describe('login unit', () => {
     // When
     // Then
     await expect(
-      login(invalidEmail, getUserByEmailAndUpdateUserIfExistCallback, createUserCallback, sendEmailWithVerificationCodeCallback),
+      login(
+        invalidEmail,
+        doesUserByEmailExistCallback,
+        updateUserWithUpdateUserObjectCallback,
+        createUserCallback,
+        sendEmailWithVerificationCodeCallback,
+      ),
     ).rejects.toThrow('simple-passwordless-auth:INVALID_EMAIL_FORMAT');
   });
 
@@ -63,16 +85,24 @@ describe('login unit', () => {
     const userAdditionnalFields = {
       name: 'John',
     };
+    doesUserByEmailExistCallback = jest.fn(() => Promise.resolve(false));
+
     // When
-    await login(user.email, getUserByEmailAndUpdateUserIfExistCallback, createUserCallback, sendEmailWithVerificationCodeCallback, {
-      userAdditionnalFields,
-    });
+    await login(
+      user.email,
+      doesUserByEmailExistCallback,
+      updateUserWithUpdateUserObjectCallback,
+      createUserCallback,
+      sendEmailWithVerificationCodeCallback,
+      { userAdditionnalFields: userAdditionnalFields as OnlyAdditionalFieldsUser<UserDao> },
+    );
 
     // Then
-    expect(getUserByEmailAndUpdateUserIfExistCallback).toHaveBeenCalledWith(
-      expect.objectContaining({ email, authCode, name: userAdditionnalFields.name }),
+    expect(doesUserByEmailExistCallback).toHaveBeenCalledWith(user.email);
+    expect(updateUserWithUpdateUserObjectCallback).not.toHaveBeenCalled();
+    expect(createUserCallback).toHaveBeenCalledWith(
+      expect.objectContaining({ email: user.email, authCode: user.authCode, name: userAdditionnalFields.name }),
     );
-    expect(createUserCallback).not.toHaveBeenCalled();
     expect(sendEmailWithVerificationCodeCallback).toHaveBeenCalledWith(user.email, user.authCode);
   });
 });

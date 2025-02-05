@@ -1,12 +1,11 @@
 /**
  * @group integration
  */
-import * as helpers from '@/libs/helpers';
+import * as helpers from '@/common/helpers';
 import { UserDao } from '@/models/user.model';
 import { connectDb, disconnectDb } from '@/tests/db/connect';
 import { createUser, deleteAllUsers, getAllUsers } from '@/tests/db/queries';
 import { fake, fakeAuthCode, fakeCreateUserCallback, fakeGetUserByEmailAndUpdateUserIfExistCallback, fakeUser } from '@/tests/fake';
-import { describe, expect, test } from '@jest/globals';
 import { login } from './login';
 
 describe('login integration', () => {

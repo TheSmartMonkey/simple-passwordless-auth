@@ -1,10 +1,11 @@
 /**
  * @group unit
  */
-import * as helpers from '@/libs/helpers';
+import { addDaysToDate, getCurrentDate, getDateFromJwtToken } from '@/common/date';
+import * as helpers from '@/common/helpers';
 import { UserDao } from '@/models/user.model';
 import { fake, fakeAuthCode, fakeUser } from '@/tests/fake';
-import { describe, expect, test } from '@jest/globals';
+import { decode, JwtPayload } from 'jsonwebtoken';
 import { validateCode } from './validate-code';
 
 describe('validateCode unit', () => {
@@ -103,5 +104,22 @@ describe('validateCode unit', () => {
     expect(getUserByEmail).toHaveBeenCalledWith(email);
     expect(token).toBeDefined();
     expect(token).not.toEqual('');
+  });
+
+  test('should return a token with expiration date of 30 days', async () => {
+    // Given
+    // When
+    const token = await validateCode(jwtTokenSecret, email, authCode, getUserByEmail);
+    const decodedToken: JwtPayload = decode(token) as JwtPayload;
+    const tokenExpirationDate = getDateFromJwtToken(decodedToken);
+    const expectedExpirationDate = addDaysToDate(getCurrentDate(), 30);
+
+    // Then
+    expect(token).toBeDefined();
+    expect(token).not.toEqual('');
+    expect(tokenExpirationDate).toBeDefined();
+    expect(tokenExpirationDate.getFullYear()).toEqual(expectedExpirationDate.getFullYear());
+    expect(tokenExpirationDate.getMonth()).toEqual(expectedExpirationDate.getMonth());
+    expect(tokenExpirationDate.getDate()).toEqual(expectedExpirationDate.getDate());
   });
 });

@@ -1,4 +1,4 @@
-import { uuid } from '@/libs/helpers';
+import { uuid } from '@/common/helpers';
 import { UserDao } from '@/models/user.model';
 import { sql } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';

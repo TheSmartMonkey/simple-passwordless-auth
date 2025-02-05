@@ -1,4 +1,4 @@
-import { uuid } from '@/libs/helpers';
+import { uuid } from '@/common/helpers';
 import { PartialUserWithRequiredEmail, UserDao } from '@/models/user.model';
 import { faker } from '@faker-js/faker';
 import { createUser, getUserByEmail, getUserByEmailAndUpdateUserIfExist } from './db/queries';
@@ -43,16 +43,14 @@ export function fakeAuthCode(): number {
   return fake.number.int({ min: 100000, max: 999999 });
 }
 
-export async function fakeGetUserByEmailAndUpdateUserIfExistCallback(
-  user: PartialUserWithRequiredEmail<UserDao>,
-): Promise<UserDao | undefined> {
+export async function fakeGetUserByEmailAndUpdateUserIfExistCallback(user: PartialUserWithRequiredEmail): Promise<UserDao | undefined> {
   console.log('fakeGetUserByEmailAndUpdateUserIfExistCallback');
   const userDb = await getUserByEmailAndUpdateUserIfExist(user);
   if (!userDb) return undefined;
   return selectDbUserToUserDao(userDb);
 }
 
-export async function fakeCreateUserCallback<TUser extends UserDao>(user: TUser): Promise<void> {
+export async function fakeCreateUserCallback(user: UserDao): Promise<void> {
   console.log('fakeCreateUserCallback');
   const insertUser = userDaoToInsertUser(user);
   await createUser(insertUser);

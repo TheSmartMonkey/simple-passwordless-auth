@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import express from 'express';
-import { login, UserDao, validateCode } from 'simple-passwordless-auth';
+import { login, UpdateUserObject, UserDao, validateCode } from 'simple-passwordless-auth';
 import { googleAuthUrl, googleCallback } from './google';
 const cors = require('cors');
 
@@ -27,11 +27,16 @@ app.post('/auth/login', async (req, res) => {
     let authCode: number | undefined;
     login(
       email,
-      (user) => {
+      (email: string) => {
+        console.log('doesUserByEmailExist');
+        console.log({ email });
+        return Promise.resolve(false);
+      },
+      (updateUserObject: UpdateUserObject) => {
         console.log('getUserByEmailAndUpdateUserIfExist');
-        authCode = user.authCode;
+        authCode = updateUserObject.authCode;
         console.log({ authCode });
-        return Promise.resolve({} as UserDao);
+        return Promise.resolve();
       },
       () => {
         console.log('createUser');

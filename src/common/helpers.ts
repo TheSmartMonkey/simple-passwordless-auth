@@ -1,20 +1,7 @@
-import { randomInt, randomUUID } from 'crypto';
-
-export function generateEmailVerificationSixDigitCode(): number {
-  return randomInt(100000, 999999);
-}
+import { randomUUID } from 'crypto';
 
 export function uuid(): string {
   return randomUUID();
-}
-
-export function getCurrentDate(): Date {
-  return new Date();
-}
-
-export function addHoursToCurrentDate(date: Date, hours = 1): Date {
-  date.setHours(date.getHours() + hours);
-  return date;
 }
 
 export function isValidEmail(email: string): boolean {
