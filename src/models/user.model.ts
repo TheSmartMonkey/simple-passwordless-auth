@@ -3,6 +3,7 @@ import { randomInt } from 'crypto';
 
 export type UserDao = {
   _id: string;
+  // TODO: add an orgId
   email: string;
   authCode: number;
   authCodeExpirationDate: Date;

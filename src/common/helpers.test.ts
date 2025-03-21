@@ -1,7 +1,7 @@
 /**
  * @group unit
  */
-import { fake } from '@/tests/fake';
+import { fake } from '@/tests/fakes/fake';
 import { validateEmail } from './helpers';
 
 describe('helpers unit', () => {

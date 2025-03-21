@@ -1,7 +1,7 @@
 /**
  * @group unit
  */
-import { fake, fakeUser } from '@/tests/fake';
+import { fake, fakeUser } from '@/tests/fakes/fake';
 import { createOrUpdateUser } from './create-or-update-user';
 
 describe('createOrUpdateUser', () => {
@@ -22,6 +22,7 @@ describe('createOrUpdateUser', () => {
     });
 
     test('should create new user without additional fields', async () => {
+      // Given
       // When
       await createOrUpdateUser(email, getUserByEmailCallbackMock, updateUserWithUpdateUserObjectCallbackMock, createUserCallbackMock);
 
@@ -42,6 +43,7 @@ describe('createOrUpdateUser', () => {
     });
 
     test('should update user with only new verification code when no additional fields', async () => {
+      // Given
       // When
       await createOrUpdateUser(email, getUserByEmailCallbackMock, updateUserWithUpdateUserObjectCallbackMock, createUserCallbackMock);
 
@@ -60,7 +62,8 @@ describe('createOrUpdateUser', () => {
     // Given
     getUserByEmailCallbackMock.mockRejectedValue(new Error('Database error'));
 
-    // When/Then
+    // When
+    // Then
     await expect(
       createOrUpdateUser(email, getUserByEmailCallbackMock, updateUserWithUpdateUserObjectCallbackMock, createUserCallbackMock),
     ).rejects.toThrow('Database error');

@@ -1,7 +1,7 @@
 import { uuid } from '@/common/helpers';
-import { UserDao } from '@/models/user.model';
+import { PartialUserWithRequiredEmail, UserDao } from '@/models/user.model';
 import { sql } from 'drizzle-orm';
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { integer, sqliteTable, SQLiteUpdateSetSource, text } from 'drizzle-orm/sqlite-core';
 
 export const usersTable = sqliteTable('usersTable', {
   _id: text('_id').primaryKey().unique().default(uuid()),
@@ -35,5 +35,16 @@ export function selectDbUserToUserDao(user: SelectDbUser): UserDao {
     createdAt: new Date(user.createdAt),
     updatedAt: new Date(user.updatedAt),
     authCodeExpirationDate: new Date(user.authCodeExpirationDate),
+  };
+}
+
+export function partialUserToSQLiteUpdate(
+  partialUser: PartialUserWithRequiredEmail,
+): SQLiteUpdateSetSource<typeof usersTable> {
+  return {
+    ...partialUser,
+    authCodeExpirationDate: partialUser.authCodeExpirationDate?.toISOString(),
+    createdAt: partialUser.createdAt?.toISOString(),
+    updatedAt: partialUser.updatedAt?.toISOString(),
   };
 }

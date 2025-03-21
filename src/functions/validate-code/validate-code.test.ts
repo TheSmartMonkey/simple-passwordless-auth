@@ -2,9 +2,9 @@
  * @group unit
  */
 import { addDaysToDate, getCurrentDate, getDateFromJwtToken } from '@/common/date';
-import * as helpers from '@/common/helpers';
+import * as userModel from '@/models/user.model';
 import { UserDao } from '@/models/user.model';
-import { fake, fakeAuthCode, fakeUser } from '@/tests/fake';
+import { fake, fakeAuthCode, fakeUser } from '@/tests/fakes/fake';
 import { decode, JwtPayload } from 'jsonwebtoken';
 import { validateCode } from './validate-code';
 
@@ -16,7 +16,7 @@ describe('validateCode unit', () => {
   const jwtTokenSecret = 'fakeJwtTokenSecret';
 
   beforeEach(() => {
-    jest.spyOn(helpers, 'generateEmailVerificationSixDigitCode').mockReturnValue(authCode);
+    jest.spyOn(userModel, 'generateEmailVerificationSixDigitCode').mockReturnValue(authCode);
     user = fakeUser({ email, authCode });
     getUserByEmail = jest.fn(() => Promise.resolve(user));
   });
