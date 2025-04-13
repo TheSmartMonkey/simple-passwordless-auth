@@ -1,6 +1,6 @@
-import { throwError } from '@/common/helpers';
 import { getTokenFromJwtTokenSecret } from '@/common/token';
 import { createOrUpdateUser } from '@/core/user/create-or-update-user';
+import { AuthError } from '@/models/error.model';
 import { GoogleOAuth2Config } from '@/models/google.model';
 import { UpdateUserObject, UserDao, UserToken } from '@/models/user.model';
 import { OAuth2Client, TokenPayload } from 'google-auth-library';
@@ -26,7 +26,7 @@ export async function handleGoogleCallback(
     const idToken = await getGoogleToken(googleClient, code);
     const payload = await verifyGoogleToken(googleClient, idToken);
     // TODO: How to know if user already logged in ? (get user by email)
-    if (!payload?.email) throwError('FAILED_TO_GET_GOOGLE_EMAIL');
+    if (!payload?.email) throw new AuthError('FAILED_TO_GET_GOOGLE_EMAIL');
 
     const user = await createOrUpdateUser(
       payload.email,
@@ -37,7 +37,7 @@ export async function handleGoogleCallback(
 
     return getTokenFromJwtTokenSecret(user, jwtTokenSecret, { tokenExpiresIn });
   } catch (error) {
-    throwError((error as Error).message);
+    throw new AuthError((error as Error).message as Uppercase<string>);
   }
 }
 
@@ -49,7 +49,7 @@ async function getGoogleToken(googleClient: OAuth2Client, googleAuthCode: string
   const { tokens } = await googleClient.getToken(googleAuthCode);
   const idToken = tokens?.id_token;
   if (!idToken) {
-    throwError('FAILED_TO_GET_GOOGLE_ID_TOKEN');
+    throw new AuthError('FAILED_TO_GET_GOOGLE_ID_TOKEN');
   }
   return idToken;
 }
@@ -60,7 +60,7 @@ async function verifyGoogleToken(googleClient: OAuth2Client, googleIdToken: stri
     audience: googleClient?._clientId,
   });
   const payload = ticket.getPayload();
-  if (!payload) throwError('FAILED_TO_GET_GOOGLE_ID_TOKEN_PAYLOAD');
-  if (!payload.email) throwError('FAILED_TO_GET_GOOGLE_ID_TOKEN_PAYLOAD_EMAIL');
+  if (!payload) throw new AuthError('FAILED_TO_GET_GOOGLE_ID_TOKEN_PAYLOAD');
+  if (!payload.email) throw new AuthError('FAILED_TO_GET_GOOGLE_ID_TOKEN_PAYLOAD_EMAIL');
   return payload;
 }

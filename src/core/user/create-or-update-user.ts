@@ -5,7 +5,6 @@ import { UserDao } from '@/models/user.model';
 import { UpdateUserObject } from '@/models/user.model';
 import { getUserObject } from './get-user-object';
 
-// TODO: CURRENT Test this function and add it in login / google
 export async function createOrUpdateUser(
   email: UserDao['email'],
   getUserByEmailCallback: (email: UserDao['email']) => Promise<UserDao | undefined>,

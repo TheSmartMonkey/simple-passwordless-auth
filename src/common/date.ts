@@ -1,5 +1,5 @@
+import { AuthError } from '@/models/error.model';
 import { JwtPayload } from 'jsonwebtoken';
-import { throwError } from './helpers';
 
 export function getCurrentDate(): Date {
   return new Date();
@@ -10,7 +10,7 @@ export function addDaysToDate(date: Date, days: number): Date {
 }
 
 export function getDateFromJwtToken(token: JwtPayload): Date {
-  if (!token?.exp) throwError('MISSING_JWT_TOKEN_EXPIRATION_DATE');
+  if (!token?.exp) throw new AuthError('MISSING_JWT_TOKEN_EXPIRATION_DATE');
   return new Date(token?.exp * 1000);
 }
 

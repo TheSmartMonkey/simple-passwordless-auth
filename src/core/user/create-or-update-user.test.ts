@@ -1,6 +1,7 @@
 /**
  * @group unit
  */
+import { AuthError } from '@/models/error.model';
 import { fake, fakeUser } from '@/tests/fakes/fake';
 import { createOrUpdateUser } from './create-or-update-user';
 
@@ -21,10 +22,15 @@ describe('createOrUpdateUser', () => {
       getUserByEmailCallbackMock.mockResolvedValue(undefined);
     });
 
-    test('should create new user without additional fields', async () => {
+    test('should create new user', async () => {
       // Given
       // When
-      await createOrUpdateUser(email, getUserByEmailCallbackMock, updateUserWithUpdateUserObjectCallbackMock, createUserCallbackMock);
+      const result = await createOrUpdateUser(
+        email,
+        getUserByEmailCallbackMock,
+        updateUserWithUpdateUserObjectCallbackMock,
+        createUserCallbackMock,
+      );
 
       // Then
       expect(createUserCallbackMock).toHaveBeenCalledWith(
@@ -33,16 +39,57 @@ describe('createOrUpdateUser', () => {
           authCode: expect.any(Number),
         }),
       );
+      expect(result).toEqual(
+        expect.objectContaining({
+          email,
+          authCode: expect.any(Number),
+        }),
+      );
       expect(updateUserWithUpdateUserObjectCallbackMock).not.toHaveBeenCalled();
+    });
+
+    test('should create user with valid 6-digit auth code', async () => {
+      // Given
+      // When
+      await createOrUpdateUser(email, getUserByEmailCallbackMock, updateUserWithUpdateUserObjectCallbackMock, createUserCallbackMock);
+
+      // Then
+      const createdUser = createUserCallbackMock.mock.calls[0][0];
+      expect(createdUser.authCode.toString()).toMatch(/^\d{6}$/);
+    });
+
+    test('should set auth code expiration date for new user', async () => {
+      // Given
+      // When
+      await createOrUpdateUser(email, getUserByEmailCallbackMock, updateUserWithUpdateUserObjectCallbackMock, createUserCallbackMock);
+
+      // Then
+      const createdUser = createUserCallbackMock.mock.calls[0][0];
+      expect(createdUser.authCodeExpirationDate).toBeInstanceOf(Date);
+      expect(createdUser.authCodeExpirationDate.getTime()).toBeGreaterThan(Date.now());
+    });
+
+    test('should handle database error during user creation', async () => {
+      // Given
+      const dbError = new AuthError('DATABASE_ERROR');
+      createUserCallbackMock.mockRejectedValue(dbError);
+
+      // When
+      // Then
+      await expect(
+        createOrUpdateUser(email, getUserByEmailCallbackMock, updateUserWithUpdateUserObjectCallbackMock, createUserCallbackMock),
+      ).rejects.toThrow(dbError);
     });
   });
 
   describe('when user exists', () => {
+    const existingUser = fakeUser();
+
     beforeEach(() => {
-      getUserByEmailCallbackMock.mockResolvedValue(fakeUser());
+      getUserByEmailCallbackMock.mockResolvedValue(existingUser);
     });
 
-    test('should update user with only new verification code when no additional fields', async () => {
+    test('should update user with only new verification code', async () => {
       // Given
       // When
       await createOrUpdateUser(email, getUserByEmailCallbackMock, updateUserWithUpdateUserObjectCallbackMock, createUserCallbackMock);
@@ -56,16 +103,50 @@ describe('createOrUpdateUser', () => {
       );
       expect(createUserCallbackMock).not.toHaveBeenCalled();
     });
+
+    test('should update with valid 6-digit auth code', async () => {
+      // Given
+      // When
+      await createOrUpdateUser(email, getUserByEmailCallbackMock, updateUserWithUpdateUserObjectCallbackMock, createUserCallbackMock);
+
+      // Then
+      const updateObject = updateUserWithUpdateUserObjectCallbackMock.mock.calls[0][0];
+      expect(updateObject.authCode.toString()).toMatch(/^\d{6}$/);
+    });
+
+    test('should update auth code expiration date', async () => {
+      // Given
+      // When
+      await createOrUpdateUser(email, getUserByEmailCallbackMock, updateUserWithUpdateUserObjectCallbackMock, createUserCallbackMock);
+
+      // Then
+      const updateObject = updateUserWithUpdateUserObjectCallbackMock.mock.calls[0][0];
+      expect(updateObject.authCodeExpirationDate).toBeInstanceOf(Date);
+      expect(updateObject.authCodeExpirationDate.getTime()).toBeGreaterThan(Date.now());
+    });
+
+    test('should handle database error during user update', async () => {
+      // Given
+      const dbError = new AuthError('DATABASE_ERROR');
+      updateUserWithUpdateUserObjectCallbackMock.mockRejectedValue(dbError);
+
+      // When
+      // Then
+      await expect(
+        createOrUpdateUser(email, getUserByEmailCallbackMock, updateUserWithUpdateUserObjectCallbackMock, createUserCallbackMock),
+      ).rejects.toThrow(dbError);
+    });
   });
 
   test('should handle database errors gracefully', async () => {
     // Given
-    getUserByEmailCallbackMock.mockRejectedValue(new Error('Database error'));
+    const authError = new AuthError('DATABASE_ERROR');
+    getUserByEmailCallbackMock.mockRejectedValue(authError);
 
     // When
     // Then
     await expect(
       createOrUpdateUser(email, getUserByEmailCallbackMock, updateUserWithUpdateUserObjectCallbackMock, createUserCallbackMock),
-    ).rejects.toThrow('Database error');
+    ).rejects.toThrow(authError);
   });
 });

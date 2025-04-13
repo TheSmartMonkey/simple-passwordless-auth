@@ -1,3 +1,4 @@
+import { AuthError } from '@/models/error.model';
 import { randomUUID } from 'crypto';
 
 export function uuid(): string {
@@ -11,10 +12,6 @@ export function isValidEmail(email: string): boolean {
 
 export function validateEmail(email: string): void {
   if (!isValidEmail(email)) {
-    throwError('INVALID_EMAIL_FORMAT');
+    throw new AuthError('INVALID_EMAIL_FORMAT');
   }
-}
-
-export function throwError(message: string): never {
-  throw new Error('simple-passwordless-auth:' + message);
 }

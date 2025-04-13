@@ -1,6 +1,7 @@
 import { getCurrentDate } from '@/common/date';
-import { throwError, validateEmail } from '@/common/helpers';
+import { validateEmail } from '@/common/helpers';
 import { getTokenFromJwtTokenSecret } from '@/common/token';
+import { AuthError } from '@/models/error.model';
 import { UserDao } from '@/models/user.model';
 
 /**
@@ -18,15 +19,15 @@ export async function validateCode(
   getUserByEmail: (email: string) => Promise<UserDao | undefined>,
   { tokenExpiresIn = '30d' }: { tokenExpiresIn?: string } = {},
 ): Promise<string> {
-  if (!jwtTokenSecret) throwError('MISSING_JWT_TOKEN_SECRET');
+  if (!jwtTokenSecret) throw new AuthError('MISSING_JWT_TOKEN_SECRET');
   validateEmail(email);
 
   const user = await getUserByEmail(email);
-  if (!user) throwError('USER_IS_NOT_REGISTERED');
+  if (!user) throw new AuthError('USER_IS_NOT_REGISTERED');
 
   const today = getCurrentDate();
-  if (user?.authCodeExpirationDate && today > user.authCodeExpirationDate) throwError('AUTH_CODE_EXPIRED');
-  if (sixDigitCode !== user?.authCode) throwError('WRONG_AUTH_CODE');
+  if (user?.authCodeExpirationDate && today > user.authCodeExpirationDate) throw new AuthError('AUTH_CODE_EXPIRED');
+  if (sixDigitCode !== user?.authCode) throw new AuthError('WRONG_AUTH_CODE');
 
   // TODO: block on certain number of tries (inc tries, calculate tries / date, connected update tries to 0 if > 1)
   // TODO: express-rate-limit by ip https://www.npmjs.com/package/express-rate-limit
