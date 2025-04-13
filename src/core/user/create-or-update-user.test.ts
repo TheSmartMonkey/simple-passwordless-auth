@@ -3,18 +3,24 @@
  */
 import { AuthError } from '@/models/error.model';
 import { fake, fakeUser } from '@/tests/fakes/fake';
-import { createOrUpdateUser } from './create-or-update-user';
+import { createOrUpdateUser, CreateOrUpdateUserCallbacks } from './create-or-update-user';
 
 describe('createOrUpdateUser', () => {
   const email = fake.internet.email();
   let getUserByEmailCallbackMock: jest.Mock;
   let updateUserWithUpdateUserObjectCallbackMock: jest.Mock;
   let createUserCallbackMock: jest.Mock;
+  let callbacks: CreateOrUpdateUserCallbacks;
 
   beforeEach(() => {
     getUserByEmailCallbackMock = jest.fn();
     updateUserWithUpdateUserObjectCallbackMock = jest.fn();
     createUserCallbackMock = jest.fn();
+    callbacks = {
+      getUserByEmail: getUserByEmailCallbackMock,
+      updateUserWithUpdateUserObject: updateUserWithUpdateUserObjectCallbackMock,
+      createUser: createUserCallbackMock,
+    };
   });
 
   describe('when user does not exist', () => {
@@ -25,12 +31,7 @@ describe('createOrUpdateUser', () => {
     test('should create new user', async () => {
       // Given
       // When
-      const result = await createOrUpdateUser(
-        email,
-        getUserByEmailCallbackMock,
-        updateUserWithUpdateUserObjectCallbackMock,
-        createUserCallbackMock,
-      );
+      const result = await createOrUpdateUser(email, callbacks);
 
       // Then
       expect(createUserCallbackMock).toHaveBeenCalledWith(
@@ -51,7 +52,7 @@ describe('createOrUpdateUser', () => {
     test('should create user with valid 6-digit auth code', async () => {
       // Given
       // When
-      await createOrUpdateUser(email, getUserByEmailCallbackMock, updateUserWithUpdateUserObjectCallbackMock, createUserCallbackMock);
+      await createOrUpdateUser(email, callbacks);
 
       // Then
       const createdUser = createUserCallbackMock.mock.calls[0][0];
@@ -61,7 +62,7 @@ describe('createOrUpdateUser', () => {
     test('should set auth code expiration date for new user', async () => {
       // Given
       // When
-      await createOrUpdateUser(email, getUserByEmailCallbackMock, updateUserWithUpdateUserObjectCallbackMock, createUserCallbackMock);
+      await createOrUpdateUser(email, callbacks);
 
       // Then
       const createdUser = createUserCallbackMock.mock.calls[0][0];
@@ -76,9 +77,7 @@ describe('createOrUpdateUser', () => {
 
       // When
       // Then
-      await expect(
-        createOrUpdateUser(email, getUserByEmailCallbackMock, updateUserWithUpdateUserObjectCallbackMock, createUserCallbackMock),
-      ).rejects.toThrow(dbError);
+      await expect(createOrUpdateUser(email, callbacks)).rejects.toThrow(dbError);
     });
   });
 
@@ -92,7 +91,7 @@ describe('createOrUpdateUser', () => {
     test('should update user with only new verification code', async () => {
       // Given
       // When
-      await createOrUpdateUser(email, getUserByEmailCallbackMock, updateUserWithUpdateUserObjectCallbackMock, createUserCallbackMock);
+      await createOrUpdateUser(email, callbacks);
 
       // Then
       expect(updateUserWithUpdateUserObjectCallbackMock).toHaveBeenCalledWith(
@@ -107,7 +106,7 @@ describe('createOrUpdateUser', () => {
     test('should update with valid 6-digit auth code', async () => {
       // Given
       // When
-      await createOrUpdateUser(email, getUserByEmailCallbackMock, updateUserWithUpdateUserObjectCallbackMock, createUserCallbackMock);
+      await createOrUpdateUser(email, callbacks);
 
       // Then
       const updateObject = updateUserWithUpdateUserObjectCallbackMock.mock.calls[0][0];
@@ -117,7 +116,7 @@ describe('createOrUpdateUser', () => {
     test('should update auth code expiration date', async () => {
       // Given
       // When
-      await createOrUpdateUser(email, getUserByEmailCallbackMock, updateUserWithUpdateUserObjectCallbackMock, createUserCallbackMock);
+      await createOrUpdateUser(email, callbacks);
 
       // Then
       const updateObject = updateUserWithUpdateUserObjectCallbackMock.mock.calls[0][0];
@@ -132,9 +131,7 @@ describe('createOrUpdateUser', () => {
 
       // When
       // Then
-      await expect(
-        createOrUpdateUser(email, getUserByEmailCallbackMock, updateUserWithUpdateUserObjectCallbackMock, createUserCallbackMock),
-      ).rejects.toThrow(dbError);
+      await expect(createOrUpdateUser(email, callbacks)).rejects.toThrow(dbError);
     });
   });
 
@@ -145,8 +142,6 @@ describe('createOrUpdateUser', () => {
 
     // When
     // Then
-    await expect(
-      createOrUpdateUser(email, getUserByEmailCallbackMock, updateUserWithUpdateUserObjectCallbackMock, createUserCallbackMock),
-    ).rejects.toThrow(authError);
+    await expect(createOrUpdateUser(email, callbacks)).rejects.toThrow(authError);
   });
 });

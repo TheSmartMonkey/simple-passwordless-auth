@@ -7,7 +7,7 @@ import { connectDb, disconnectDb } from '@/tests/db/connect';
 import { createUser, deleteAllUsers, getAllUsers } from '@/tests/db/queries';
 import { fake, fakeAuthCode, fakeUser } from '@/tests/fakes/fake';
 import { fakeCreateUserCallback, fakeGetUserByEmailCallback } from '@/tests/fakes/fake-callback';
-import { login } from './login';
+import { login, LoginCallbacks } from './login';
 
 describe('login integration', () => {
   let user: UserDao;
@@ -17,6 +17,7 @@ describe('login integration', () => {
   let updateUserWithUpdateUserObjectCallback: jest.Mock;
   let createUserCallback: jest.Mock;
   let sendEmailWithVerificationCodeCallback: jest.Mock;
+  let callbacks: LoginCallbacks;
 
   beforeAll(async () => {
     await connectDb();
@@ -29,6 +30,12 @@ describe('login integration', () => {
     updateUserWithUpdateUserObjectCallback = jest.fn();
     createUserCallback = jest.fn();
     sendEmailWithVerificationCodeCallback = jest.fn();
+    callbacks = {
+      getUserByEmail: getUserByEmailCallbackMock,
+      updateUserWithUpdateUserObject: updateUserWithUpdateUserObjectCallback,
+      createUser: createUserCallback,
+      sendEmailWithVerificationCode: sendEmailWithVerificationCodeCallback,
+    };
 
     await deleteAllUsers();
   });
@@ -44,15 +51,10 @@ describe('login integration', () => {
       authCode,
       authCodeExpirationDate: new Date().toISOString(),
     });
+    callbacks.getUserByEmail = fakeGetUserByEmailCallback;
 
     // When
-    await login(
-      user.email,
-      fakeGetUserByEmailCallback,
-      updateUserWithUpdateUserObjectCallback,
-      createUserCallback,
-      sendEmailWithVerificationCodeCallback,
-    );
+    await login(user.email, callbacks);
     const users = await getAllUsers();
 
     // Then
@@ -66,15 +68,11 @@ describe('login integration', () => {
   test('should create user and send email with verification code when user first login', async () => {
     // Given
     getUserByEmailCallbackMock = jest.fn(() => Promise.resolve(undefined));
+    callbacks.getUserByEmail = getUserByEmailCallbackMock;
+    callbacks.createUser = fakeCreateUserCallback;
 
     // When
-    await login(
-      user.email,
-      getUserByEmailCallbackMock,
-      updateUserWithUpdateUserObjectCallback,
-      fakeCreateUserCallback,
-      sendEmailWithVerificationCodeCallback,
-    );
+    await login(user.email, callbacks);
     const users = await getAllUsers();
 
     // Then
