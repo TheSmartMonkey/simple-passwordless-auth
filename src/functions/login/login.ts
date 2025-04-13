@@ -2,6 +2,13 @@ import { validateEmail } from '@/common/helpers';
 import { createOrUpdateUser } from '@/core/user/create-or-update-user';
 import { UpdateUserObject, UserDao } from '@/models/user.model';
 
+export type LoginCallbacks = {
+  getUserByEmail: (email: string) => Promise<UserDao | undefined>;
+  updateUserWithUpdateUserObject: (updateUserObject: UpdateUserObject) => Promise<void>;
+  createUser: (user: UserDao) => Promise<void>;
+  sendEmailWithVerificationCode: (email: string, verificationCode: number) => Promise<void>;
+};
+
 /**
  * @param email - The email of the user to login
  * @param doesUserByEmailExistCallback - Check if the user exists in your database
@@ -9,14 +16,8 @@ import { UpdateUserObject, UserDao } from '@/models/user.model';
  * @param createUserCallback - Create a new user in your database
  * @param sendEmailWithVerificationCodeCallback - Send an email with the verification code
  */
-export async function login(
-  email: UserDao['email'],
-  getUserByEmailCallback: (email: UserDao['email']) => Promise<UserDao | undefined>,
-  updateUserWithUpdateUserObjectCallback: (updateUserObject: UpdateUserObject) => Promise<void>,
-  createUserCallback: (user: UserDao) => Promise<void>,
-  sendEmailWithVerificationCodeCallback: (email: string, verificationCode: number) => Promise<void>,
-): Promise<void> {
+export async function login(email: UserDao['email'], callbacks: LoginCallbacks): Promise<void> {
   validateEmail(email);
-  const user = await createOrUpdateUser(email, getUserByEmailCallback, updateUserWithUpdateUserObjectCallback, createUserCallback);
-  await sendEmailWithVerificationCodeCallback(email, user.authCode);
+  const user = await createOrUpdateUser(email, callbacks);
+  await callbacks.sendEmailWithVerificationCode(email, user.authCode);
 }

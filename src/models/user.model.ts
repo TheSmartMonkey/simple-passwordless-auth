@@ -15,8 +15,6 @@ export type PartialUserWithRequiredEmail = Partial<UserDao> & {
   email: UserDao['email'];
 };
 
-export type UserToken = string;
-
 // TODO: Implement additional fields
 // export type OnlyAdditionalFieldsUser<TUser> = keyof TUser & keyof UserDao extends never ? TUser : never;
 

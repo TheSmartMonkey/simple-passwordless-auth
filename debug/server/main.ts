@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import express from 'express';
-import { login, UpdateUserObject, validateCode } from 'simple-passwordless-auth';
+import { login, UpdateUserObject, UserDao, validateCode } from 'simple-passwordless-auth';
 import { fakeUser } from '../../src/tests/fakes/fake';
 import { googleAuthUrl, googleCallback } from './google';
 const cors = require('cors');
@@ -26,28 +26,28 @@ app.post('/auth/login', async (req, res) => {
     }
 
     let authCode: number | undefined;
-    login(
-      email,
-      (email: string) => {
+    login(email, {
+      getUserByEmail: (email: string) => {
         console.log('doesUserByEmailExist');
         console.log({ email });
         return Promise.resolve(undefined);
       },
-      (updateUserObject: UpdateUserObject) => {
-        console.log('getUserByEmailAndUpdateUserIfExist');
+      updateUserWithUpdateUserObject: (updateUserObject: UpdateUserObject) => {
+        console.log('updateUserWithUpdateUserObject');
         authCode = updateUserObject.authCode;
         console.log({ authCode });
         return Promise.resolve();
       },
-      () => {
+      createUser: (user: UserDao) => {
         console.log('createUser');
+        console.log({ user });
         return Promise.resolve();
       },
-      () => {
+      sendEmailWithVerificationCode: () => {
         console.log('sendEmailWithVerificationCode');
         return Promise.resolve();
       },
-    );
+    });
 
     res.status(200).send('Login initiated, check your email for the verification code.');
   } catch (error) {
@@ -67,9 +67,11 @@ app.post('/auth/validate-code', async (req, res) => {
       process.env.JWT_SECRET ?? '',
       email,
       code,
-      (email: string) => {
-        console.log('getUserByEmail');
-        return Promise.resolve(fakeUser({ email, authCode: code }));
+      {
+        getUserByEmail: (email: string) => {
+          console.log('getUserByEmail');
+          return Promise.resolve(fakeUser({ email, authCode: code }));
+        },
       },
       {
         tokenExpiresIn: '1m',

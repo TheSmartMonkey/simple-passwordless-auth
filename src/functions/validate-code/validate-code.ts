@@ -2,7 +2,16 @@ import { getCurrentDate } from '@/common/date';
 import { validateEmail } from '@/common/helpers';
 import { getTokenFromJwtTokenSecret } from '@/common/token';
 import { AuthError } from '@/models/error.model';
+import { TokenExpiration } from '@/models/token.model';
 import { UserDao } from '@/models/user.model';
+
+export type ValidateCodeCallbacks = {
+  getUserByEmail: (email: string) => Promise<UserDao | undefined>;
+};
+
+export type ValidateCodeConfig = {
+  tokenExpiresIn?: TokenExpiration;
+};
 
 /**
  * Validate the code and return a JWT token
@@ -16,13 +25,13 @@ export async function validateCode(
   jwtTokenSecret: string,
   email: string,
   sixDigitCode: number,
-  getUserByEmail: (email: string) => Promise<UserDao | undefined>,
-  { tokenExpiresIn = '30d' }: { tokenExpiresIn?: string } = {},
+  callbacks: ValidateCodeCallbacks,
+  config: ValidateCodeConfig = {},
 ): Promise<string> {
   if (!jwtTokenSecret) throw new AuthError('MISSING_JWT_TOKEN_SECRET');
   validateEmail(email);
 
-  const user = await getUserByEmail(email);
+  const user = await callbacks.getUserByEmail(email);
   if (!user) throw new AuthError('USER_IS_NOT_REGISTERED');
 
   const today = getCurrentDate();
@@ -32,5 +41,5 @@ export async function validateCode(
   // TODO: block on certain number of tries (inc tries, calculate tries / date, connected update tries to 0 if > 1)
   // TODO: express-rate-limit by ip https://www.npmjs.com/package/express-rate-limit
 
-  return getTokenFromJwtTokenSecret(user, jwtTokenSecret, { tokenExpiresIn });
+  return getTokenFromJwtTokenSecret(user, jwtTokenSecret, { tokenExpiresIn: config.tokenExpiresIn });
 }

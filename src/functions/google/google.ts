@@ -2,9 +2,25 @@ import { getTokenFromJwtTokenSecret } from '@/common/token';
 import { createOrUpdateUser } from '@/core/user/create-or-update-user';
 import { AuthError } from '@/models/error.model';
 import { GoogleOAuth2Config } from '@/models/google.model';
-import { UpdateUserObject, UserDao, UserToken } from '@/models/user.model';
+import { TokenExpiration, UserToken } from '@/models/token.model';
+import { UpdateUserObject, UserDao } from '@/models/user.model';
 import { OAuth2Client, TokenPayload } from 'google-auth-library';
 
+export type HandleGoogleCallbackCallbacks = {
+  getUserByEmail: (email: string) => Promise<UserDao | undefined>;
+  updateUserWithUpdateUserObject: (updateUserObject: UpdateUserObject) => Promise<void>;
+  createUser: (user: UserDao) => Promise<void>;
+};
+
+export type HandleGoogleCallbackConfig = {
+  tokenExpiresIn?: TokenExpiration;
+};
+
+/**
+ * Get Google auth url
+ * @param config Google OAuth2 config
+ * @returns Google auth url
+ */
 export function getGoogleAuthUrl(config: GoogleOAuth2Config): string {
   const googleClient = initGoogleOAuth2Client(config);
   return googleClient.generateAuthUrl({
@@ -15,38 +31,29 @@ export function getGoogleAuthUrl(config: GoogleOAuth2Config): string {
 /**
  * Handle Google callback
  * @param jwtTokenSecret JWT token secret
- * @param config Google OAuth2 config
+ * @param googleConfig Google OAuth2 config
  * @param code Google auth code
- * @param getUserByEmailCallback Get user by email callback
- * @param updateUserWithUpdateUserObjectCallback Update user with update user object callback
- * @param createUserCallback Create user callback
+ * @param callbacks Custom callbacks to get user by email, update user with update user object and create user
  * @param tokenExpiresIn Token expires in
  * @returns User token string
  */
 export async function handleGoogleCallback(
   jwtTokenSecret: string,
-  config: GoogleOAuth2Config,
+  googleConfig: GoogleOAuth2Config,
   code: string,
-  getUserByEmailCallback: (email: UserDao['email']) => Promise<UserDao | undefined>,
-  updateUserWithUpdateUserObjectCallback: (updateUserObject: UpdateUserObject) => Promise<void>,
-  createUserCallback: (user: UserDao) => Promise<void>,
-  { tokenExpiresIn = '30d' }: { tokenExpiresIn?: string } = {},
+  callbacks: HandleGoogleCallbackCallbacks,
+  config: HandleGoogleCallbackConfig = {},
 ): Promise<UserToken> {
   try {
-    const googleClient = initGoogleOAuth2Client(config);
+    const googleClient = initGoogleOAuth2Client(googleConfig);
     const idToken = await getGoogleToken(googleClient, code);
     const payload = await verifyGoogleToken(googleClient, idToken);
     // TODO: How to know if user already logged in ? (get user by email)
     if (!payload?.email) throw new AuthError('FAILED_TO_GET_GOOGLE_EMAIL');
 
-    const user = await createOrUpdateUser(
-      payload.email,
-      getUserByEmailCallback,
-      updateUserWithUpdateUserObjectCallback,
-      createUserCallback,
-    );
+    const user = await createOrUpdateUser(payload.email, callbacks);
 
-    return getTokenFromJwtTokenSecret(user, jwtTokenSecret, { tokenExpiresIn });
+    return getTokenFromJwtTokenSecret(user, jwtTokenSecret, { tokenExpiresIn: config.tokenExpiresIn });
   } catch (error) {
     throw new AuthError((error as Error).message as Uppercase<string>);
   }
