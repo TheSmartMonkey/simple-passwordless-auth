@@ -23,9 +23,15 @@ export async function googleCallback(req: any, res: any) {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
       redirectUrl: process.env.GOOGLE_REDIRECT_URL ?? '',
     };
-    const userInfo = await handleGoogleCallback(
+    const token = await handleGoogleCallback(
+      process.env.JWT_SECRET ?? '',
       googleConfig,
       code as string,
+      (email: string) => {
+        console.log('getUserByEmail');
+        console.log({ email });
+        return Promise.resolve(undefined);
+      },
       (updateUserObject: UpdateUserObject) => {
         console.log('updateUserWithUpdateUserObject');
         console.log({ updateUserObject });
@@ -36,8 +42,8 @@ export async function googleCallback(req: any, res: any) {
         return Promise.resolve();
       },
     );
-    console.log({ userInfo });
-    res.status(200).json(userInfo);
+    console.log({ token });
+    res.status(200).json({ token });
   } catch (error) {
     res.status(500).send(`Error: ${(error as Error).message}`);
   }

@@ -12,6 +12,17 @@ export function getGoogleAuthUrl(config: GoogleOAuth2Config): string {
   });
 }
 
+/**
+ * Handle Google callback
+ * @param jwtTokenSecret JWT token secret
+ * @param config Google OAuth2 config
+ * @param code Google auth code
+ * @param getUserByEmailCallback Get user by email callback
+ * @param updateUserWithUpdateUserObjectCallback Update user with update user object callback
+ * @param createUserCallback Create user callback
+ * @param tokenExpiresIn Token expires in
+ * @returns User token string
+ */
 export async function handleGoogleCallback(
   jwtTokenSecret: string,
   config: GoogleOAuth2Config,

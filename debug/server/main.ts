@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import express from 'express';
-import { login, UpdateUserObject, UserDao, validateCode } from 'simple-passwordless-auth';
+import { login, UpdateUserObject, validateCode } from 'simple-passwordless-auth';
+import { fakeUser } from '../../src/tests/fakes/fake';
 import { googleAuthUrl, googleCallback } from './google';
 const cors = require('cors');
 
@@ -30,7 +31,7 @@ app.post('/auth/login', async (req, res) => {
       (email: string) => {
         console.log('doesUserByEmailExist');
         console.log({ email });
-        return Promise.resolve(false);
+        return Promise.resolve(undefined);
       },
       (updateUserObject: UpdateUserObject) => {
         console.log('getUserByEmailAndUpdateUserIfExist');
@@ -66,9 +67,9 @@ app.post('/auth/validate-code', async (req, res) => {
       process.env.JWT_SECRET ?? '',
       email,
       code,
-      () => {
+      (email: string) => {
         console.log('getUserByEmail');
-        return Promise.resolve({} as UserDao);
+        return Promise.resolve(fakeUser({ email, authCode: code }));
       },
       {
         tokenExpiresIn: '1m',
