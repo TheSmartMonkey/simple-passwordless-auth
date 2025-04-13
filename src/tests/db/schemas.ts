@@ -38,9 +38,7 @@ export function selectDbUserToUserDao(user: SelectDbUser): UserDao {
   };
 }
 
-export function partialUserToSQLiteUpdate(
-  partialUser: PartialUserWithRequiredEmail,
-): SQLiteUpdateSetSource<typeof usersTable> {
+export function partialUserToSQLiteUpdate(partialUser: PartialUserWithRequiredEmail): SQLiteUpdateSetSource<typeof usersTable> {
   return {
     ...partialUser,
     authCodeExpirationDate: partialUser.authCodeExpirationDate?.toISOString(),
