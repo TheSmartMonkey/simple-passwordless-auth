@@ -1,16 +1,16 @@
 import { getTokenFromJwtTokenSecret } from '@/common/token';
-import { createOrUpdateUser } from '@/core/user/create-or-update-user';
+import { createOrUpdateUser } from '@/core/user/create-or-update-user/create-or-update-user';
 import { AuthError } from '@/models/error.model';
 import { GoogleOAuth2Config } from '@/models/google.model';
 import { TokenExpiration, UserToken } from '@/models/token.model';
 import { UpdateUserObject, UserDao } from '@/models/user.model';
 import { OAuth2Client, TokenPayload } from 'google-auth-library';
 
-export type HandleGoogleCallbackCallbacks = {
+export interface HandleGoogleCallbackCallbacks {
   getUserByEmail: (email: string) => Promise<UserDao | undefined>;
   updateUserWithUpdateUserObject: (updateUserObject: UpdateUserObject) => Promise<void>;
   createUser: (user: UserDao) => Promise<void>;
-};
+}
 
 export type HandleGoogleCallbackConfig = {
   tokenExpiresIn?: TokenExpiration;

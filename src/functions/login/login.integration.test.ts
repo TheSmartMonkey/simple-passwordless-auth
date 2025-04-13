@@ -8,16 +8,13 @@ import { createUser, deleteAllUsers, getAllUsers } from '@/tests/db/queries';
 import { fake, fakeAuthCode, fakeUser } from '@/tests/fakes/fake';
 import { fakeCreateUserCallback, fakeGetUserByEmailCallback } from '@/tests/fakes/fake-callback';
 import { login, LoginCallbacks } from './login';
+import { loginCallbacksMock } from './login.mock';
 
 describe('login integration', () => {
   let user: UserDao;
   const email = fake.internet.email();
   const authCode = fakeAuthCode();
-  let getUserByEmailCallbackMock: jest.Mock;
-  let updateUserWithUpdateUserObjectCallback: jest.Mock;
-  let createUserCallback: jest.Mock;
-  let sendEmailWithVerificationCodeCallback: jest.Mock;
-  let callbacks: LoginCallbacks;
+  let callbacks: jest.Mocked<LoginCallbacks>;
 
   beforeAll(async () => {
     await connectDb();
@@ -26,16 +23,7 @@ describe('login integration', () => {
   beforeEach(async () => {
     jest.spyOn(userModel, 'generateEmailVerificationSixDigitCode').mockReturnValue(authCode);
     user = fakeUser({ email, authCode });
-    getUserByEmailCallbackMock = jest.fn(() => Promise.resolve(user));
-    updateUserWithUpdateUserObjectCallback = jest.fn();
-    createUserCallback = jest.fn();
-    sendEmailWithVerificationCodeCallback = jest.fn();
-    callbacks = {
-      getUserByEmail: getUserByEmailCallbackMock,
-      updateUserWithUpdateUserObject: updateUserWithUpdateUserObjectCallback,
-      createUser: createUserCallback,
-      sendEmailWithVerificationCode: sendEmailWithVerificationCodeCallback,
-    };
+    callbacks = loginCallbacksMock(user);
 
     await deleteAllUsers();
   });
@@ -51,7 +39,7 @@ describe('login integration', () => {
       authCode,
       authCodeExpirationDate: new Date().toISOString(),
     });
-    callbacks.getUserByEmail = fakeGetUserByEmailCallback;
+    callbacks.getUserByEmail = fakeGetUserByEmailCallback as jest.Mock;
 
     // When
     await login(user.email, callbacks);
@@ -61,15 +49,14 @@ describe('login integration', () => {
     expect(users).toHaveLength(1);
     expect(users[0].email).toEqual(email);
     expect(users[0].authCode).toEqual(authCode);
-    expect(createUserCallback).not.toHaveBeenCalled();
-    expect(sendEmailWithVerificationCodeCallback).toHaveBeenCalled();
+    expect(callbacks.createUser).not.toHaveBeenCalled();
+    expect(callbacks.sendEmailWithVerificationCode).toHaveBeenCalled();
   });
 
   test('should create user and send email with verification code when user first login', async () => {
     // Given
-    getUserByEmailCallbackMock = jest.fn(() => Promise.resolve(undefined));
-    callbacks.getUserByEmail = getUserByEmailCallbackMock;
-    callbacks.createUser = fakeCreateUserCallback;
+    callbacks.getUserByEmail = jest.fn().mockImplementation(() => Promise.resolve(undefined));
+    callbacks.createUser = fakeCreateUserCallback as jest.Mock;
 
     // When
     await login(user.email, callbacks);
@@ -79,7 +66,7 @@ describe('login integration', () => {
     expect(users).toHaveLength(1);
     expect(users[0].email).toEqual(email);
     expect(users[0].authCode).toEqual(authCode);
-    expect(getUserByEmailCallbackMock).toHaveBeenCalled();
-    expect(sendEmailWithVerificationCodeCallback).toHaveBeenCalled();
+    expect(callbacks.getUserByEmail).toHaveBeenCalled();
+    expect(callbacks.sendEmailWithVerificationCode).toHaveBeenCalled();
   });
 });

@@ -5,9 +5,9 @@ import { AuthError } from '@/models/error.model';
 import { TokenExpiration } from '@/models/token.model';
 import { UserDao } from '@/models/user.model';
 
-export type ValidateCodeCallbacks = {
+export interface ValidateCodeCallbacks {
   getUserByEmail: (email: string) => Promise<UserDao | undefined>;
-};
+}
 
 export type ValidateCodeConfig = {
   tokenExpiresIn?: TokenExpiration;

@@ -8,22 +8,19 @@ import { UserDao } from '@/models/user.model';
 import { fake, fakeAuthCode, fakeUser } from '@/tests/fakes/fake';
 import { decode, JwtPayload } from 'jsonwebtoken';
 import { validateCode, ValidateCodeCallbacks } from './validate-code';
+import { validateCodeCallbacksMock } from './validate-code.mock';
 
 describe('validateCode unit', () => {
   let user: UserDao;
   const authCode = fakeAuthCode();
   const email = fake.internet.email();
-  let getUserByEmailCallback: jest.Mock;
-  let callbacks: ValidateCodeCallbacks;
   const jwtTokenSecret = 'fakeJwtTokenSecret';
+  let callbacks: jest.Mocked<ValidateCodeCallbacks>;
 
   beforeEach(() => {
     user = fakeUser({ email, authCode });
     jest.spyOn(userModel, 'generateEmailVerificationSixDigitCode').mockReturnValue(authCode);
-    getUserByEmailCallback = jest.fn(() => Promise.resolve(user));
-    callbacks = {
-      getUserByEmail: getUserByEmailCallback,
-    };
+    callbacks = validateCodeCallbacksMock(user);
   });
 
   test('should return a token when the auth code is valid', async () => {
@@ -32,7 +29,7 @@ describe('validateCode unit', () => {
     const token = await validateCode(jwtTokenSecret, email, authCode, callbacks);
 
     // Then
-    expect(getUserByEmailCallback).toHaveBeenCalledWith(email);
+    expect(callbacks.getUserByEmail).toHaveBeenCalledWith(email);
     expect(token).toBeDefined();
     expect(token).not.toEqual('');
   });
@@ -44,18 +41,17 @@ describe('validateCode unit', () => {
     // When
     // Then
     await expect(validateCode(jwtTokenSecret, email, invalidAuthCode, callbacks)).rejects.toThrow(new AuthError('WRONG_AUTH_CODE'));
-    expect(getUserByEmailCallback).toHaveBeenCalledWith(email);
+    expect(callbacks.getUserByEmail).toHaveBeenCalledWith(email);
   });
 
   test('should throw an error when the user does not exist', async () => {
     // Given
-    getUserByEmailCallback = jest.fn(() => Promise.resolve(undefined));
-    callbacks.getUserByEmail = getUserByEmailCallback;
+    callbacks.getUserByEmail = jest.fn().mockImplementation(() => Promise.resolve(undefined));
 
     // When
     // Then
     await expect(validateCode(jwtTokenSecret, email, authCode, callbacks)).rejects.toThrow(new AuthError('USER_IS_NOT_REGISTERED'));
-    expect(getUserByEmailCallback).toHaveBeenCalledWith(email);
+    expect(callbacks.getUserByEmail).toHaveBeenCalledWith(email);
   });
 
   test('should throw an error when the auth code is expired', async () => {
@@ -66,7 +62,7 @@ describe('validateCode unit', () => {
 
     // When
     await expect(validateCode(jwtTokenSecret, email, authCode, callbacks)).rejects.toThrow(new AuthError('AUTH_CODE_EXPIRED'));
-    expect(getUserByEmailCallback).toHaveBeenCalledWith(email);
+    expect(callbacks.getUserByEmail).toHaveBeenCalledWith(email);
   });
 
   test('should throw an error when the email format is invalid', async () => {
@@ -99,7 +95,7 @@ describe('validateCode unit', () => {
     const token = await validateCode(jwtTokenSecret, email, authCode, callbacks);
 
     // Then
-    expect(getUserByEmailCallback).toHaveBeenCalledWith(email);
+    expect(callbacks.getUserByEmail).toHaveBeenCalledWith(email);
     expect(token).toBeDefined();
     expect(token).not.toEqual('');
   });

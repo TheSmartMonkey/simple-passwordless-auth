@@ -63,7 +63,7 @@ app.post('/auth/validate-code', async (req, res) => {
       return;
     }
 
-    const isValid = await validateCode(
+    const token = await validateCode(
       process.env.JWT_SECRET ?? '',
       email,
       code,
@@ -77,7 +77,8 @@ app.post('/auth/validate-code', async (req, res) => {
         tokenExpiresIn: '1m',
       },
     );
-    if (isValid) {
+    if (token) {
+      console.log({ token });
       res.status(200).send('Code validated successfully');
     } else {
       res.status(400).send('Invalid code');

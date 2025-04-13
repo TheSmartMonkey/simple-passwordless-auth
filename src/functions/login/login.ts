@@ -1,13 +1,13 @@
 import { validateEmail } from '@/common/helpers';
-import { createOrUpdateUser } from '@/core/user/create-or-update-user';
+import { createOrUpdateUser } from '@/core/user/create-or-update-user/create-or-update-user';
 import { UpdateUserObject, UserDao } from '@/models/user.model';
 
-export type LoginCallbacks = {
+export interface LoginCallbacks {
   getUserByEmail: (email: string) => Promise<UserDao | undefined>;
   updateUserWithUpdateUserObject: (updateUserObject: UpdateUserObject) => Promise<void>;
   createUser: (user: UserDao) => Promise<void>;
   sendEmailWithVerificationCode: (email: string, verificationCode: number) => Promise<void>;
-};
+}
 
 /**
  * @param email - The email of the user to login
