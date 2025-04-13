@@ -4,4 +4,5 @@ export * from '@/functions/login/login';
 export * from '@/functions/validate-code/validate-code';
 
 // Models
+export * from '@/models/google.model';
 export * from '@/models/user.model';

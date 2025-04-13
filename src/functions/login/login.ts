@@ -1,44 +1,23 @@
-import { addHoursToCurrentDate, generateEmailVerificationSixDigitCode, getCurrentDate, uuid, validateEmail } from '@/libs/helpers';
-import { OnlyAdditionnalFieldsUser, PartialUserWithRequiredEmail, UserDao } from '@/models/user.model';
+import { validateEmail } from '@/common/helpers';
+import { createOrUpdateUser } from '@/core/user/create-or-update-user/create-or-update-user';
+import { UpdateUserObject, UserDao } from '@/models/user.model';
+
+export interface LoginCallbacks {
+  getUserByEmail: (email: string) => Promise<UserDao | undefined>;
+  updateUserWithUpdateUserObject: (updateUserObject: UpdateUserObject) => Promise<void>;
+  createUser: (user: UserDao) => Promise<void>;
+  sendEmailWithVerificationCode: (email: string, verificationCode: number) => Promise<void>;
+}
 
 /**
  * @param email - The email of the user to login
- * @param getUserByEmailAndUpdateUserIfExistCallback - Get the user by email and update the user if exist in your database
+ * @param doesUserByEmailExistCallback - Check if the user exists in your database
+ * @param updateUserWithUpdateUserObjectCallback - Update the user in your database
  * @param createUserCallback - Create a new user in your database
  * @param sendEmailWithVerificationCodeCallback - Send an email with the verification code
- * @param userAdditionnalFields - Additionnal fields to the user
  */
-export async function login<TUser extends UserDao>(
-  email: string,
-  getUserByEmailAndUpdateUserIfExistCallback: (user: PartialUserWithRequiredEmail<TUser>) => Promise<TUser | undefined>,
-  createUserCallback: (user: TUser) => Promise<void>,
-  sendEmailWithVerificationCodeCallback: (email: string, verificationCode: number) => Promise<void>,
-  { userAdditionnalFields = {} as OnlyAdditionnalFieldsUser<TUser> }: { userAdditionnalFields?: OnlyAdditionnalFieldsUser<TUser> } = {},
-): Promise<void> {
+export async function login(email: UserDao['email'], callbacks: LoginCallbacks): Promise<void> {
   validateEmail(email);
-  const authCode = generateEmailVerificationSixDigitCode();
-  const today = getCurrentDate();
-  const user: TUser = {
-    _id: uuid(),
-    email,
-    authCode,
-    authCodeExpirationDate: addHoursToCurrentDate(today),
-    createdAt: today,
-    updatedAt: today,
-    ...userAdditionnalFields,
-  } as TUser;
-
-  await updateUserOrCreateNewUser<TUser>(user, getUserByEmailAndUpdateUserIfExistCallback, createUserCallback);
-  await sendEmailWithVerificationCodeCallback(email, authCode);
-}
-
-async function updateUserOrCreateNewUser<TUser extends UserDao>(
-  user: TUser,
-  getUserByEmailAndUpdateUserIfExistCallback: (partialUser: PartialUserWithRequiredEmail<TUser>) => Promise<TUser | undefined>,
-  createUserCallback: (user: TUser) => Promise<void>,
-): Promise<void> {
-  const foundUser = await getUserByEmailAndUpdateUserIfExistCallback(user);
-  if (!foundUser) {
-    await createUserCallback(user);
-  }
+  const user = await createOrUpdateUser(email, callbacks);
+  await callbacks.sendEmailWithVerificationCode(email, user.authCode);
 }

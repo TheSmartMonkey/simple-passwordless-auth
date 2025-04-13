@@ -1,25 +1,29 @@
 /**
  * @group integration
  */
-import * as helpers from '@/libs/helpers';
+import { AuthError } from '@/models/error.model';
+import * as userModel from '@/models/user.model';
 import { connectDb, disconnectDb } from '@/tests/db/connect';
 import { createUser, deleteAllUsers } from '@/tests/db/queries';
-import { fake, fakeAuthCode, fakeGetUserByEmailCallback } from '@/tests/fake';
-import { describe, expect, test } from '@jest/globals';
-import { validateCode } from './validate-code';
+import { fake, fakeAuthCode } from '@/tests/fakes/fake';
+import { fakeGetUserByEmailCallback } from '@/tests/fakes/fake-callback';
+import { validateCode, ValidateCodeCallbacks } from './validate-code';
 
 describe('validateCode integration', () => {
   const email = fake.internet.email();
   const authCode = fakeAuthCode();
   const jwtTokenSecret = 'test-jwt-token-secret';
+  let callbacks: ValidateCodeCallbacks;
 
   beforeAll(async () => {
     await connectDb();
   });
 
   beforeEach(async () => {
-    jest.spyOn(helpers, 'generateEmailVerificationSixDigitCode').mockReturnValue(authCode);
-
+    jest.spyOn(userModel, 'generateEmailVerificationSixDigitCode').mockReturnValue(authCode);
+    callbacks = {
+      getUserByEmail: fakeGetUserByEmailCallback,
+    };
     await deleteAllUsers();
   });
 
@@ -38,7 +42,7 @@ describe('validateCode integration', () => {
     });
 
     // When
-    const token = await validateCode(jwtTokenSecret, email, authCode, fakeGetUserByEmailCallback);
+    const token = await validateCode(jwtTokenSecret, email, authCode, callbacks);
 
     // Then
     expect(token).toBeDefined();
@@ -48,8 +52,6 @@ describe('validateCode integration', () => {
     // Given
     // When
     // Then
-    await expect(validateCode(jwtTokenSecret, email, authCode, fakeGetUserByEmailCallback)).rejects.toThrow(
-      'simple-passwordless-auth:USER_IS_NOT_REGISTERED',
-    );
+    await expect(validateCode(jwtTokenSecret, email, authCode, callbacks)).rejects.toThrow(new AuthError('USER_IS_NOT_REGISTERED'));
   });
 });

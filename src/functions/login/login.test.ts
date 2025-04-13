@@ -1,50 +1,50 @@
 /**
  * @group unit
  */
-import * as helpers from '@/libs/helpers';
+import { AuthError } from '@/models/error.model';
+import * as userModel from '@/models/user.model';
 import { UserDao } from '@/models/user.model';
-import { fake, fakeAuthCode, fakeUser } from '@/tests/fake';
-import { describe, expect, test } from '@jest/globals';
-import { login } from './login';
+import { fakeUser } from '@/tests/fakes/fake';
+import { LoginCallbacks, login } from './login';
+import { loginCallbacksMock } from './login.mock';
 
 describe('login unit', () => {
   let user: UserDao;
-  const authCode = fakeAuthCode();
-  const email = fake.internet.email();
-  let getUserByEmailAndUpdateUserIfExistCallback: jest.Mock;
-  let createUserCallback: jest.Mock;
-  let sendEmailWithVerificationCodeCallback: jest.Mock;
+  let callbacks: jest.Mocked<LoginCallbacks>;
 
   beforeEach(() => {
-    jest.spyOn(helpers, 'generateEmailVerificationSixDigitCode').mockReturnValue(authCode);
-    user = fakeUser({ email, authCode });
-    getUserByEmailAndUpdateUserIfExistCallback = jest.fn(() => Promise.resolve(user));
-    createUserCallback = jest.fn();
-    sendEmailWithVerificationCodeCallback = jest.fn();
+    user = fakeUser();
+    jest.spyOn(userModel, 'generateEmailVerificationSixDigitCode').mockReturnValue(user.authCode);
+    jest.spyOn(userModel, 'generateAuthCodeExpirationDate').mockReturnValue(user.authCodeExpirationDate);
+    callbacks = loginCallbacksMock(user);
   });
 
   test('should login and send email with verification code when user first login', async () => {
     // Given
-    getUserByEmailAndUpdateUserIfExistCallback = jest.fn(() => Promise.resolve(undefined));
+    callbacks.getUserByEmail = jest.fn().mockImplementation(() => Promise.resolve(undefined));
 
     // When
-    await login(email, getUserByEmailAndUpdateUserIfExistCallback, createUserCallback, sendEmailWithVerificationCodeCallback);
+    await login(user.email, callbacks);
 
     // Then
-    expect(getUserByEmailAndUpdateUserIfExistCallback).toHaveBeenCalledWith(expect.objectContaining({ email, authCode }));
-    expect(createUserCallback).toHaveBeenCalledWith(expect.objectContaining({ email, authCode }));
-    expect(sendEmailWithVerificationCodeCallback).toHaveBeenCalledWith(user.email, user.authCode);
+    expect(callbacks.getUserByEmail).toHaveBeenCalledWith(user.email);
+    expect(callbacks.updateUserWithUpdateUserObject).not.toHaveBeenCalled();
+    expect(callbacks.createUser).toHaveBeenCalledWith(expect.objectContaining({ email: user.email, authCode: user.authCode }));
+    expect(callbacks.sendEmailWithVerificationCode).toHaveBeenCalledWith(user.email, user.authCode);
   });
 
   test('should login and send email with verification code when user already exists', async () => {
     // Given
     // When
-    await login(email, getUserByEmailAndUpdateUserIfExistCallback, createUserCallback, sendEmailWithVerificationCodeCallback);
+    await login(user.email, callbacks);
 
     // Then
-    expect(getUserByEmailAndUpdateUserIfExistCallback).toHaveBeenCalledWith(expect.objectContaining({ email, authCode }));
-    expect(createUserCallback).not.toHaveBeenCalled();
-    expect(sendEmailWithVerificationCodeCallback).toHaveBeenCalledWith(user.email, user.authCode);
+    expect(callbacks.getUserByEmail).toHaveBeenCalledWith(user.email);
+    expect(callbacks.updateUserWithUpdateUserObject).toHaveBeenCalledWith(
+      expect.objectContaining({ email: user.email, authCode: user.authCode, authCodeExpirationDate: user.authCodeExpirationDate }),
+    );
+    expect(callbacks.createUser).not.toHaveBeenCalled();
+    expect(callbacks.sendEmailWithVerificationCode).toHaveBeenCalledWith(user.email, user.authCode);
   });
 
   test('should throw error when invalid email format', async () => {
@@ -53,26 +53,6 @@ describe('login unit', () => {
 
     // When
     // Then
-    await expect(
-      login(invalidEmail, getUserByEmailAndUpdateUserIfExistCallback, createUserCallback, sendEmailWithVerificationCodeCallback),
-    ).rejects.toThrow('simple-passwordless-auth:INVALID_EMAIL_FORMAT');
-  });
-
-  test('should create user with additionnal fields', async () => {
-    // Given
-    const userAdditionnalFields = {
-      name: 'John',
-    };
-    // When
-    await login(user.email, getUserByEmailAndUpdateUserIfExistCallback, createUserCallback, sendEmailWithVerificationCodeCallback, {
-      userAdditionnalFields,
-    });
-
-    // Then
-    expect(getUserByEmailAndUpdateUserIfExistCallback).toHaveBeenCalledWith(
-      expect.objectContaining({ email, authCode, name: userAdditionnalFields.name }),
-    );
-    expect(createUserCallback).not.toHaveBeenCalled();
-    expect(sendEmailWithVerificationCodeCallback).toHaveBeenCalledWith(user.email, user.authCode);
+    await expect(login(invalidEmail, callbacks)).rejects.toThrow(new AuthError('INVALID_EMAIL_FORMAT'));
   });
 });

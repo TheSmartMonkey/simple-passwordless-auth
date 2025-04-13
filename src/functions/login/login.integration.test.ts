@@ -1,32 +1,29 @@
 /**
  * @group integration
  */
-import * as helpers from '@/libs/helpers';
+import * as userModel from '@/models/user.model';
 import { UserDao } from '@/models/user.model';
 import { connectDb, disconnectDb } from '@/tests/db/connect';
 import { createUser, deleteAllUsers, getAllUsers } from '@/tests/db/queries';
-import { fake, fakeAuthCode, fakeCreateUserCallback, fakeGetUserByEmailAndUpdateUserIfExistCallback, fakeUser } from '@/tests/fake';
-import { describe, expect, test } from '@jest/globals';
-import { login } from './login';
+import { fake, fakeAuthCode, fakeUser } from '@/tests/fakes/fake';
+import { fakeCreateUserCallback, fakeGetUserByEmailCallback } from '@/tests/fakes/fake-callback';
+import { login, LoginCallbacks } from './login';
+import { loginCallbacksMock } from './login.mock';
 
 describe('login integration', () => {
   let user: UserDao;
   const email = fake.internet.email();
   const authCode = fakeAuthCode();
-  let getUserByEmailAndUpdateUserIfExistCallback: jest.Mock;
-  let createUserCallback: jest.Mock;
-  let sendEmailWithVerificationCodeCallback: jest.Mock;
+  let callbacks: jest.Mocked<LoginCallbacks>;
 
   beforeAll(async () => {
     await connectDb();
   });
 
   beforeEach(async () => {
-    jest.spyOn(helpers, 'generateEmailVerificationSixDigitCode').mockReturnValue(authCode);
+    jest.spyOn(userModel, 'generateEmailVerificationSixDigitCode').mockReturnValue(authCode);
     user = fakeUser({ email, authCode });
-    getUserByEmailAndUpdateUserIfExistCallback = jest.fn(() => Promise.resolve(user));
-    createUserCallback = jest.fn();
-    sendEmailWithVerificationCodeCallback = jest.fn();
+    callbacks = loginCallbacksMock(user);
 
     await deleteAllUsers();
   });
@@ -42,32 +39,34 @@ describe('login integration', () => {
       authCode,
       authCodeExpirationDate: new Date().toISOString(),
     });
+    callbacks.getUserByEmail = fakeGetUserByEmailCallback as jest.Mock;
 
     // When
-    await login(user.email, fakeGetUserByEmailAndUpdateUserIfExistCallback, createUserCallback, sendEmailWithVerificationCodeCallback);
+    await login(user.email, callbacks);
     const users = await getAllUsers();
 
     // Then
     expect(users).toHaveLength(1);
     expect(users[0].email).toEqual(email);
     expect(users[0].authCode).toEqual(authCode);
-    expect(createUserCallback).not.toHaveBeenCalled();
-    expect(sendEmailWithVerificationCodeCallback).toHaveBeenCalled();
+    expect(callbacks.createUser).not.toHaveBeenCalled();
+    expect(callbacks.sendEmailWithVerificationCode).toHaveBeenCalled();
   });
 
   test('should create user and send email with verification code when user first login', async () => {
     // Given
-    getUserByEmailAndUpdateUserIfExistCallback = jest.fn(() => Promise.resolve(undefined));
+    callbacks.getUserByEmail = jest.fn().mockImplementation(() => Promise.resolve(undefined));
+    callbacks.createUser = fakeCreateUserCallback as jest.Mock;
 
     // When
-    await login(user.email, getUserByEmailAndUpdateUserIfExistCallback, fakeCreateUserCallback, sendEmailWithVerificationCodeCallback);
+    await login(user.email, callbacks);
     const users = await getAllUsers();
 
     // Then
     expect(users).toHaveLength(1);
     expect(users[0].email).toEqual(email);
     expect(users[0].authCode).toEqual(authCode);
-    expect(getUserByEmailAndUpdateUserIfExistCallback).toHaveBeenCalled();
-    expect(sendEmailWithVerificationCodeCallback).toHaveBeenCalled();
+    expect(callbacks.getUserByEmail).toHaveBeenCalled();
+    expect(callbacks.sendEmailWithVerificationCode).toHaveBeenCalled();
   });
 });

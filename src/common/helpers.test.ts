@@ -1,8 +1,8 @@
 /**
  * @group unit
  */
-import { fake } from '@/tests/fake';
-import { describe, expect, test } from '@jest/globals';
+import { AuthError } from '@/models/error.model';
+import { fake } from '@/tests/fakes/fake';
 import { validateEmail } from './helpers';
 
 describe('helpers unit', () => {
@@ -13,7 +13,7 @@ describe('helpers unit', () => {
 
       // When
       // Then
-      expect(() => validateEmail(email)).toThrow('simple-passwordless-auth:INVALID_EMAIL_FORMAT');
+      expect(() => validateEmail(email)).toThrow(new AuthError('INVALID_EMAIL_FORMAT'));
     });
 
     test('should not throw an error when the email format is valid', async () => {
@@ -31,7 +31,7 @@ describe('helpers unit', () => {
 
       // When
       // Then
-      expect(() => validateEmail(email)).toThrow('simple-passwordless-auth:INVALID_EMAIL_FORMAT');
+      expect(() => validateEmail(email)).toThrow(new AuthError('INVALID_EMAIL_FORMAT'));
     });
   });
 });
